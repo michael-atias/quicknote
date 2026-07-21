@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickNote</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <div class="logo">📝</div>
+    <div class="title">QuickNote</div>
+    <div class="subtitle">Notes &amp; cheat sheet for any page</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-number" id="totalNotes">0</div>
+      <div class="stat-label">Notes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="totalPages">0</div>
+      <div class="stat-label">Pages</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="globalNotes">0</div>
+      <div class="stat-label">Global</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab tab-active" data-tab="notes">Notes</button>
+    <button class="tab" data-tab="cheatsheet">Cheat Sheet</button>
+    <button class="tab" data-tab="backup">Backup</button>
+  </div>
+
+  <!-- NOTES MANAGER -->
+  <section class="panel panel-active" id="panel-notes">
+    <input type="search" id="noteSearch" class="search" placeholder="Search all notes…" autocomplete="off">
+    <div id="notesList" class="notes-list"></div>
+    <div id="notesEmpty" class="empty" hidden>
+      No notes yet. Right-click any page and choose <strong>“Add QuickNote here”</strong>.
+    </div>
+  </section>
+
+  <!-- CHEAT SHEET -->
+  <section class="panel" id="panel-cheatsheet">
+    <p class="hint">Click any payload to copy it. Built for PortSwigger / SQLi practice.</p>
+    <input type="search" id="cheatSearch" class="search" placeholder="Filter payloads…" autocomplete="off">
+    <div id="cheatList" class="cheat-list"></div>
+  </section>
+
+  <!-- BACKUP -->
+  <section class="panel" id="panel-backup">
+    <p class="hint">Export all your notes to a JSON file, or import a backup.</p>
+    <button id="exportBtn" class="btn btn-primary">⬇ Export notes (JSON)</button>
+    <label class="btn btn-secondary" for="importFile">⬆ Import notes (JSON)</label>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+    <div id="backupMsg" class="backup-msg" hidden></div>
+    <p class="hint hint-small">Import merges with your existing notes (duplicate IDs are skipped).</p>
+  </section>
+
+  <div class="how-to">
+    <span>Right-click a page → <strong>“Add QuickNote here”</strong> · or the global option for notes shown everywhere.</span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

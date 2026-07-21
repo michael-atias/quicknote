@@ -1,0 +1,324 @@
+/* QuickNote - Content Styles */
+
+.quicknote-container {
+  position: absolute;
+  z-index: 2147483646;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Pin (minimized state) */
+.quicknote-pin {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #fef08a, #fde047);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: move;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+  font-size: 18px;
+  user-select: none;
+}
+
+.quicknote-pin:hover {
+  transform: scale(1.15);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Card (expanded state) */
+.quicknote-card {
+  min-width: 200px;
+  min-height: 120px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Color themes */
+.quicknote-theme-yellow {
+  background: #fef9c3;
+  border: 1px solid #fde047;
+}
+
+.quicknote-theme-blue {
+  background: #dbeafe;
+  border: 1px solid #93c5fd;
+}
+
+.quicknote-theme-green {
+  background: #dcfce7;
+  border: 1px solid #86efac;
+}
+
+.quicknote-theme-pink {
+  background: #fce7f3;
+  border: 1px solid #f9a8d4;
+}
+
+/* Header */
+.quicknote-header {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  cursor: move;
+  user-select: none;
+}
+
+.quicknote-drag-area {
+  flex: 1;
+  font-size: 11px;
+  color: #888;
+  cursor: move;
+}
+
+.quicknote-colors {
+  display: flex;
+  gap: 6px;
+  margin-right: 8px;
+}
+
+.quicknote-color {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid rgba(255,255,255,0.8);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
+}
+
+.quicknote-color:hover {
+  transform: scale(1.25);
+}
+
+.quicknote-color-yellow { background: #fde047; }
+.quicknote-color-blue { background: #93c5fd; }
+.quicknote-color-green { background: #86efac; }
+.quicknote-color-pink { background: #f9a8d4; }
+
+.quicknote-minimize,
+.quicknote-delete,
+.quicknote-copy,
+.quicknote-mono {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  color: #666;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
+}
+
+.quicknote-copy,
+.quicknote-mono {
+  font-size: 13px;
+}
+
+.quicknote-copy:hover,
+.quicknote-mono:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.quicknote-copy.quicknote-copied {
+  color: #059669;
+}
+
+.quicknote-mono.quicknote-mono-active {
+  background: rgba(0, 0, 0, 0.14);
+  color: #111827;
+}
+
+.quicknote-minimize:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.quicknote-delete:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Content */
+.quicknote-content {
+  flex: 1;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  resize: none;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #374151;
+  box-sizing: border-box;
+}
+
+.quicknote-content:focus {
+  outline: none;
+}
+
+/* Monospace / code mode — ideal for payloads like ' UNION SELECT NULL-- */
+.quicknote-content.quicknote-mono-on {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.quicknote-content::placeholder {
+  color: #9ca3af;
+}
+
+/* Footer */
+.quicknote-footer {
+  padding: 6px 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 10px;
+  color: #888;
+}
+
+/* Resize handle */
+.quicknote-resizer {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  cursor: nwse-resize;
+  background: linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.1) 50%);
+}
+
+.quicknote-resizer:hover {
+  background: linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.2) 50%);
+}
+
+/* ================================
+   NICE CONFIRM DIALOG
+   ================================ */
+
+.quicknote-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2147483647;
+  animation: quicknote-fade-in 0.15s ease;
+}
+
+@keyframes quicknote-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.quicknote-confirm-dialog {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  width: 280px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: quicknote-slide-up 0.2s ease;
+}
+
+@keyframes quicknote-slide-up {
+  from { 
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.quicknote-confirm-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.quicknote-confirm-message {
+  font-size: 16px;
+  color: #374151;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.quicknote-confirm-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.quicknote-confirm-cancel {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #374151;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.quicknote-confirm-cancel:hover {
+  background: #f3f4f6;
+}
+
+.quicknote-confirm-delete {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  background: #ef4444;
+  color: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.quicknote-confirm-delete:hover {
+  background: #dc2626;
+}
+
+/* ================================
+   GLOBAL NOTES + REVEAL FLASH
+   ================================ */
+
+/* Global notes get a distinct blue pin so they're easy to tell apart. */
+.quicknote-pin-global {
+  background: linear-gradient(135deg, #93c5fd, #60a5fa);
+}
+
+/* Flash effect when the popup "reveals" a note. */
+.quicknote-flash .quicknote-card,
+.quicknote-flash .quicknote-pin {
+  animation: quicknote-pulse 0.5s ease 3;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.6), 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+@keyframes quicknote-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); }
+  50%  { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.0); }
+  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.0); }
+}

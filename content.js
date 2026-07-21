@@ -1,0 +1,493 @@
+// QuickNote - Content Script
+//
+// Renders sticky notes on the page. Notes are either page-scoped (tied to the
+// current URL) or global (rendered on every page). Global notes make the
+// extension usable as an always-available cheat sheet.
+
+(function () {
+  'use strict';
+
+  var notes = [];
+  var lastClickX = 100;
+  var lastClickY = 100;
+  var lastKnownUrl = location.href;
+
+  // --- SPA / "invisible" navigation handling ---------------------------------
+  // Busy pages mutate the DOM constantly, so we must NOT reload notes on every
+  // mutation. We debounce and only act when the URL actually changed.
+  var urlCheckTimer = null;
+  var observer = new MutationObserver(function () {
+    if (urlCheckTimer) return; // already scheduled
+    urlCheckTimer = setTimeout(function () {
+      urlCheckTimer = null;
+      if (location.href !== lastKnownUrl) {
+        lastKnownUrl = location.href;
+        clearRenderedNotes();
+        loadNotes();
+      }
+    }, 250);
+  });
+
+  if (document.body) {
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // Also catch history API navigations directly (more reliable than mutations).
+  window.addEventListener('popstate', handleUrlMaybeChanged);
+  window.addEventListener('hashchange', handleUrlMaybeChanged);
+
+  function handleUrlMaybeChanged() {
+    if (location.href !== lastKnownUrl) {
+      lastKnownUrl = location.href;
+      clearRenderedNotes();
+      loadNotes();
+    }
+  }
+
+  function clearRenderedNotes() {
+    var existing = document.querySelectorAll('.quicknote-container');
+    existing.forEach(function (el) {
+      if (el.__quicknoteCleanup) el.__quicknoteCleanup();
+      el.remove();
+    });
+  }
+
+  // Track right-click position so new notes appear where the user clicked.
+  document.addEventListener('contextmenu', function (e) {
+    lastClickX = e.pageX;
+    lastClickY = e.pageY;
+  });
+
+  loadNotes();
+
+  // --- Messages from background / popup --------------------------------------
+  chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+    if (request.action === 'createNote') {
+      createNote(lastClickX, lastClickY, request.selectedText || '', request.scope || 'page');
+    } else if (request.action === 'revealNote') {
+      revealNote(request.noteId);
+      sendResponse({ ok: true });
+    } else if (request.action === 'ping') {
+      sendResponse({ ok: true });
+    }
+    return false;
+  });
+
+  function loadNotes() {
+    chrome.runtime.sendMessage(
+      { action: 'getNotes', url: window.location.href },
+      function (response) {
+        if (chrome.runtime.lastError) return;
+        if (response && response.notes) {
+          notes = response.notes;
+          for (var i = 0; i < notes.length; i++) {
+            renderNote(notes[i]);
+          }
+        }
+      }
+    );
+  }
+
+  // --- Confirm dialog ---------------------------------------------------------
+  function showConfirmDialog(message, onConfirm, onCancel) {
+    var overlay = document.createElement('div');
+    overlay.className = 'quicknote-confirm-overlay';
+
+    var dialog = document.createElement('div');
+    dialog.className = 'quicknote-confirm-dialog';
+
+    var icon = document.createElement('div');
+    icon.className = 'quicknote-confirm-icon';
+    icon.textContent = '🗑️';
+
+    var msg = document.createElement('div');
+    msg.className = 'quicknote-confirm-message';
+    msg.textContent = message; // textContent avoids HTML injection
+
+    var buttons = document.createElement('div');
+    buttons.className = 'quicknote-confirm-buttons';
+
+    var cancelBtn = document.createElement('button');
+    cancelBtn.className = 'quicknote-confirm-cancel';
+    cancelBtn.textContent = 'Cancel';
+
+    var deleteBtn = document.createElement('button');
+    deleteBtn.className = 'quicknote-confirm-delete';
+    deleteBtn.textContent = 'Delete';
+
+    buttons.appendChild(cancelBtn);
+    buttons.appendChild(deleteBtn);
+    dialog.appendChild(icon);
+    dialog.appendChild(msg);
+    dialog.appendChild(buttons);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    cancelBtn.focus();
+
+    function cleanup() {
+      overlay.remove();
+      document.removeEventListener('keydown', escHandler);
+    }
+
+    cancelBtn.onclick = function () { cleanup(); if (onCancel) onCancel(); };
+    deleteBtn.onclick = function () { cleanup(); if (onConfirm) onConfirm(); };
+    overlay.onclick = function (e) {
+      if (e.target === overlay) { cleanup(); if (onCancel) onCancel(); }
+    };
+
+    function escHandler(e) {
+      if (e.key === 'Escape') { cleanup(); if (onCancel) onCancel(); }
+    }
+    document.addEventListener('keydown', escHandler);
+  }
+
+  // --- Note rendering ---------------------------------------------------------
+  function renderNote(note) {
+    var isGlobal = note.scope === 'global';
+
+    var container = document.createElement('div');
+    container.className = 'quicknote-container';
+    container.setAttribute('data-note-id', note.id);
+    container.style.left = note.x + 'px';
+    container.style.top = note.y + 'px';
+    container.style.position = 'absolute';
+    container.style.zIndex = '2147483646';
+
+    var pin = document.createElement('div');
+    pin.className = 'quicknote-pin' + (isGlobal ? ' quicknote-pin-global' : '');
+    pin.innerHTML = isGlobal ? '&#127760;' : '&#128221;'; // 🌐 vs 📝
+    pin.title = isGlobal
+      ? 'Global note — click to view, drag to move'
+      : 'Click to view, drag to move';
+
+    var card = document.createElement('div');
+    card.className = 'quicknote-card quicknote-theme-' + (note.color || 'yellow');
+    card.style.display = 'none';
+    card.style.width = (note.width || 260) + 'px';
+    card.style.height = (note.height || 190) + 'px';
+
+    // Header (built with DOM to avoid injecting note data as HTML).
+    var header = document.createElement('div');
+    header.className = 'quicknote-header';
+
+    var dragArea = document.createElement('div');
+    dragArea.className = 'quicknote-drag-area';
+    dragArea.textContent = isGlobal ? '🌐 Global · drag' : 'Drag here';
+
+    var colors = document.createElement('div');
+    colors.className = 'quicknote-colors';
+    ['yellow', 'blue', 'green', 'pink'].forEach(function (c) {
+      var span = document.createElement('span');
+      span.className = 'quicknote-color quicknote-color-' + c;
+      span.setAttribute('data-color', c);
+      colors.appendChild(span);
+    });
+
+    var copyBtn = document.createElement('button');
+    copyBtn.className = 'quicknote-copy';
+    copyBtn.title = 'Copy note text';
+    copyBtn.textContent = '⧉';
+
+    var monoBtn = document.createElement('button');
+    monoBtn.className = 'quicknote-mono';
+    monoBtn.title = 'Toggle code/monospace';
+    monoBtn.textContent = '</>';
+
+    var minimizeBtn = document.createElement('button');
+    minimizeBtn.className = 'quicknote-minimize';
+    minimizeBtn.title = 'Minimize';
+    minimizeBtn.textContent = '−';
+
+    var deleteBtn = document.createElement('button');
+    deleteBtn.className = 'quicknote-delete';
+    deleteBtn.title = 'Delete';
+    deleteBtn.textContent = '×';
+
+    header.appendChild(dragArea);
+    header.appendChild(colors);
+    header.appendChild(copyBtn);
+    header.appendChild(monoBtn);
+    header.appendChild(minimizeBtn);
+    header.appendChild(deleteBtn);
+
+    var textarea = document.createElement('textarea');
+    textarea.className = 'quicknote-content' + (note.mono ? ' quicknote-mono-on' : '');
+    textarea.placeholder = 'Write your note...';
+    textarea.value = note.content || '';
+    textarea.spellcheck = false;
+
+    var footer = document.createElement('div');
+    footer.className = 'quicknote-footer';
+    footer.textContent = (isGlobal ? 'Global · ' : '') + formatDate(note.createdAt);
+
+    var resizer = document.createElement('div');
+    resizer.className = 'quicknote-resizer';
+
+    card.appendChild(header);
+    card.appendChild(textarea);
+    card.appendChild(footer);
+    card.appendChild(resizer);
+
+    container.appendChild(pin);
+    container.appendChild(card);
+
+    // === Dragging / resizing state ===
+    var isDraggingPin = false;
+    var isDraggingCard = false;
+    var isResizing = false;
+    var pinStartX = 0, pinStartY = 0, pinOffsetX = 0, pinOffsetY = 0;
+    var cardOffsetX = 0, cardOffsetY = 0;
+
+    pin.onmousedown = function (e) {
+      if (e.button !== 0) return;
+      isDraggingPin = true;
+      pinStartX = e.clientX;
+      pinStartY = e.clientY;
+      pinOffsetX = e.clientX - container.offsetLeft + window.scrollX;
+      pinOffsetY = e.clientY - container.offsetTop + window.scrollY;
+      e.preventDefault();
+    };
+
+    pin.onclick = function (e) {
+      var moved = Math.abs(e.clientX - pinStartX) > 5 || Math.abs(e.clientY - pinStartY) > 5;
+      if (!moved) {
+        pin.style.display = 'none';
+        card.style.display = 'flex';
+      }
+    };
+
+    header.onmousedown = function (e) {
+      if (e.target.tagName === 'BUTTON' || e.target.className.indexOf('quicknote-color') !== -1) return;
+      isDraggingCard = true;
+      cardOffsetX = e.clientX - container.offsetLeft + window.scrollX;
+      cardOffsetY = e.clientY - container.offsetTop + window.scrollY;
+      container.style.zIndex = '2147483647';
+      e.preventDefault();
+    };
+
+    resizer.onmousedown = function (e) {
+      isResizing = true;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    function onMouseMove(e) {
+      if (isDraggingPin) {
+        container.style.left = Math.max(0, e.clientX - pinOffsetX + window.scrollX) + 'px';
+        container.style.top = Math.max(0, e.clientY - pinOffsetY + window.scrollY) + 'px';
+      } else if (isDraggingCard) {
+        container.style.left = Math.max(0, e.clientX - cardOffsetX + window.scrollX) + 'px';
+        container.style.top = Math.max(0, e.clientY - cardOffsetY + window.scrollY) + 'px';
+      } else if (isResizing) {
+        var newWidth = e.clientX - container.offsetLeft + window.scrollX;
+        var newHeight = e.clientY - container.offsetTop + window.scrollY;
+        if (newWidth > 160) { card.style.width = newWidth + 'px'; note.width = newWidth; }
+        if (newHeight > 110) { card.style.height = newHeight + 'px'; note.height = newHeight; }
+      }
+    }
+
+    function onMouseUp() {
+      if (isDraggingPin || isDraggingCard || isResizing) {
+        note.x = parseInt(container.style.left, 10) || 0;
+        note.y = parseInt(container.style.top, 10) || 0;
+        updateNote(note);
+        container.style.zIndex = '2147483646';
+      }
+      isDraggingPin = false;
+      isDraggingCard = false;
+      isResizing = false;
+    }
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+
+    // Store a cleanup fn so listeners are removed when the note is removed for
+    // ANY reason (delete, URL change, etc.) — fixes the listener leak.
+    container.__quicknoteCleanup = function () {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    minimizeBtn.onclick = function (e) {
+      e.stopPropagation();
+      card.style.display = 'none';
+      pin.style.display = 'flex';
+    };
+
+    deleteBtn.onclick = function (e) {
+      e.stopPropagation();
+      showConfirmDialog('Delete this note?', function () {
+        container.__quicknoteCleanup();
+        deleteNote(note);
+        container.remove();
+      });
+    };
+
+    copyBtn.onclick = function (e) {
+      e.stopPropagation();
+      copyText(textarea.value, copyBtn);
+    };
+
+    monoBtn.onclick = function (e) {
+      e.stopPropagation();
+      note.mono = !note.mono;
+      textarea.classList.toggle('quicknote-mono-on', note.mono);
+      monoBtn.classList.toggle('quicknote-mono-active', note.mono);
+      updateNote(note);
+    };
+    if (note.mono) monoBtn.classList.add('quicknote-mono-active');
+
+    var colorBtns = card.querySelectorAll('.quicknote-color');
+    for (var i = 0; i < colorBtns.length; i++) {
+      colorBtns[i].onclick = function (e) {
+        e.stopPropagation();
+        var color = this.getAttribute('data-color');
+        card.className = 'quicknote-card quicknote-theme-' + color;
+        note.color = color;
+        updateNote(note);
+      };
+    }
+
+    var saveTimeout;
+    textarea.oninput = function () {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(function () {
+        note.content = textarea.value;
+        note.updatedAt = Date.now();
+        updateNote(note);
+      }, 400);
+    };
+
+    container.onclick = function (e) { e.stopPropagation(); };
+
+    document.body.appendChild(container);
+  }
+
+  function copyText(text, btn) {
+    var done = function () {
+      if (!btn) return;
+      var prev = btn.textContent;
+      btn.textContent = '✓';
+      btn.classList.add('quicknote-copied');
+      setTimeout(function () {
+        btn.textContent = prev;
+        btn.classList.remove('quicknote-copied');
+      }, 1000);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+    function fallbackCopy() {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        done();
+      } catch (e) { /* no-op */ }
+    }
+  }
+
+  // Bring a note into view and flash it — used by the popup's notes manager.
+  function revealNote(noteId) {
+    var container = document.querySelector('[data-note-id="' + cssEscape(noteId) + '"]');
+    if (!container) return;
+
+    // If the pin sits outside the current viewport, pull it back in.
+    var left = parseInt(container.style.left, 10) || 0;
+    var top = parseInt(container.style.top, 10) || 0;
+    var maxLeft = window.scrollX + window.innerWidth - 80;
+    var maxTop = window.scrollY + window.innerHeight - 80;
+    if (left > maxLeft || top > maxTop || left < window.scrollX || top < window.scrollY) {
+      left = window.scrollX + 40;
+      top = window.scrollY + 40;
+      container.style.left = left + 'px';
+      container.style.top = top + 'px';
+      var noteObj = findNote(noteId);
+      if (noteObj) { noteObj.x = left; noteObj.y = top; updateNote(noteObj); }
+    }
+
+    container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    var pin = container.querySelector('.quicknote-pin');
+    var card = container.querySelector('.quicknote-card');
+    if (pin) pin.style.display = 'none';
+    if (card) card.style.display = 'flex';
+    container.classList.add('quicknote-flash');
+    setTimeout(function () { container.classList.remove('quicknote-flash'); }, 1500);
+  }
+
+  function findNote(id) {
+    for (var i = 0; i < notes.length; i++) {
+      if (notes[i].id === id) return notes[i];
+    }
+    return null;
+  }
+
+  function createNote(x, y, initialText, scope) {
+    var note = {
+      id: 'note_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+      content: initialText || '',
+      x: x,
+      y: y,
+      width: 260,
+      height: 190,
+      color: scope === 'global' ? 'blue' : 'yellow',
+      scope: scope || 'page',
+      mono: false,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+
+    chrome.runtime.sendMessage(
+      { action: 'saveNote', url: window.location.href, note: note },
+      function (response) {
+        if (chrome.runtime.lastError) return;
+        if (response && response.success) {
+          notes.push(note);
+          renderNote(note);
+          var container = document.querySelector('[data-note-id="' + cssEscape(note.id) + '"]');
+          if (container) {
+            container.querySelector('.quicknote-pin').style.display = 'none';
+            var card = container.querySelector('.quicknote-card');
+            card.style.display = 'flex';
+            card.querySelector('.quicknote-content').focus();
+          }
+        }
+      }
+    );
+  }
+
+  function updateNote(note) {
+    chrome.runtime.sendMessage({
+      action: 'updateNote',
+      url: window.location.href,
+      note: note
+    });
+  }
+
+  function deleteNote(note) {
+    chrome.runtime.sendMessage({
+      action: 'deleteNote',
+      url: window.location.href,
+      noteId: note.id,
+      scope: note.scope || 'page'
+    });
+    notes = notes.filter(function (n) { return n.id !== note.id; });
+  }
+
+  function cssEscape(value) {
+    if (window.CSS && CSS.escape) return CSS.escape(value);
+    return String(value).replace(/["\\]/g, '\\$&');
+  }
+
+  function formatDate(timestamp) {
+    return new Date(timestamp).toLocaleDateString();
+  }
+})();
