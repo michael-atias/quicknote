@@ -36,7 +36,7 @@
 
 /* Card (expanded state) */
 .quicknote-card {
-  min-width: 200px;
+  min-width: 248px;
   min-height: 120px;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.12);
@@ -87,7 +87,11 @@
 }
 
 .quicknote-drag-area {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 11px;
   color: #888;
   cursor: move;
@@ -97,6 +101,7 @@
   display: flex;
   gap: 6px;
   margin-right: 8px;
+  flex-shrink: 0;
 }
 
 .quicknote-color {
@@ -125,6 +130,7 @@
 .quicknote-scope {
   width: 24px;
   height: 24px;
+  flex-shrink: 0;
   border: none;
   background: transparent;
   cursor: pointer;

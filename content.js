@@ -72,17 +72,51 @@
 
   loadNotes();
 
+  // --- Live sync across tabs --------------------------------------------------
+  // When notes change in storage (deleted/added in another tab), reconcile the
+  // page without a refresh. We only add missing notes and remove vanished ones;
+  // notes already on screen are left alone so active editing/dragging isn't
+  // disrupted.
+  var reconcileTimer = null;
+  chrome.storage.onChanged.addListener(function (changes, area) {
+    if (area !== 'local') return;
+    if (!changes.notes && !changes.global) return;
+    clearTimeout(reconcileTimer);
+    reconcileTimer = setTimeout(reconcile, 150);
+  });
+
+  function reconcile() {
+    chrome.runtime.sendMessage({ action: 'getNotes', url: window.location.href }, function (response) {
+      if (chrome.runtime.lastError || !response || !response.notes) return;
+      var fresh = response.notes;
+      var freshById = {};
+      fresh.forEach(function (n) { freshById[n.id] = true; });
+
+      // Remove notes deleted in another tab.
+      document.querySelectorAll('.quicknote-container').forEach(function (el) {
+        var id = el.getAttribute('data-note-id');
+        if (!freshById[id]) {
+          if (el.__quicknoteCleanup) el.__quicknoteCleanup();
+          el.remove();
+          notes = notes.filter(function (n) { return n.id !== id; });
+        }
+      });
+
+      // Add notes created in another tab.
+      fresh.forEach(function (n) {
+        if (!document.querySelector('[data-note-id="' + cssEscape(n.id) + '"]')) {
+          notes.push(n);
+          renderNote(n);
+        }
+      });
+    });
+  }
+
   // --- Messages from background / popup --------------------------------------
   chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.action === 'createNote') {
-      var nx = lastClickX;
-      var ny = lastClickY;
-      if (request.atViewport) {
-        // Keyboard shortcut: no click point — drop it into the visible area.
-        nx = window.scrollX + Math.max(20, Math.round(window.innerWidth / 2) - 130);
-        ny = window.scrollY + Math.round(window.innerHeight / 3);
-      }
-      createNote(nx, ny, request.selectedText || '', request.scope || 'page');
+      createNote(lastClickX, lastClickY, request.selectedText || '', request.scope || 'page');
+      sendResponse({ ok: true }); // reply so the sender knows we're present
     } else if (request.action === 'revealNote') {
       revealNote(request.noteId);
       sendResponse({ ok: true });
@@ -309,7 +343,7 @@
       } else if (isResizing) {
         var newWidth = e.clientX - container.offsetLeft + window.scrollX;
         var newHeight = e.clientY - container.offsetTop + window.scrollY;
-        if (newWidth > 160) { card.style.width = newWidth + 'px'; note.width = newWidth; }
+        if (newWidth > 248) { card.style.width = newWidth + 'px'; note.width = newWidth; }
         if (newHeight > 110) { card.style.height = newHeight + 'px'; note.height = newHeight; }
       }
     }
