@@ -37,7 +37,7 @@
 /* Card (expanded state) */
 .quicknote-card {
   --qn-fg: #1f2937; /* readable foreground, set per-note by JS */
-  min-width: 224px;
+  min-width: 264px;
   min-height: 120px;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.12);
@@ -125,7 +125,8 @@
 .quicknote-delete,
 .quicknote-copy,
 .quicknote-mono,
-.quicknote-scope {
+.quicknote-scope,
+.quicknote-fontsize {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
@@ -145,6 +146,12 @@
 .quicknote-scope {
   font-size: 13px;
 }
+
+.quicknote-fontsize {
+  font-size: 12px;
+  font-weight: 700;
+}
+.quicknote-fontsize:hover { background: rgba(0, 0, 0, 0.1); }
 
 .quicknote-copy:hover,
 .quicknote-mono:hover,

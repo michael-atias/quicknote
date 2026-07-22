@@ -50,6 +50,7 @@ function sanitizeNote(n) {
     color: toHex(n.color),
     scope: n.scope === 'global' ? 'global' : 'page',
     mono: !!n.mono,
+    fontSize: Math.min(30, Math.max(10, num(n.fontSize, 14))),
     createdAt: num(n.createdAt, Date.now()),
     updatedAt: num(n.updatedAt, Date.now())
   };

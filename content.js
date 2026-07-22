@@ -34,6 +34,14 @@
     return DEFAULT_COLOR;
   }
 
+  // Font size bounds for note text.
+  var MIN_FS = 10, MAX_FS = 30, DEFAULT_FS = 14;
+  function clampFontSize(n) {
+    n = Number(n);
+    if (!isFinite(n)) return DEFAULT_FS;
+    return Math.min(MAX_FS, Math.max(MIN_FS, Math.round(n)));
+  }
+
   // Pick readable text color (dark or light) for a given background hex.
   function contrastText(hex) {
     var r = parseInt(hex.substr(1, 2), 16);
@@ -170,6 +178,11 @@
           var pick = el.querySelector('.quicknote-colorpick');
           applyNoteColor(card, textarea, footer, n.color);
           if (pick) pick.value = toHex(n.color);
+        }
+        // Sync font size.
+        if (textarea && obj.fontSize !== n.fontSize) {
+          obj.fontSize = n.fontSize;
+          textarea.style.fontSize = clampFontSize(n.fontSize || DEFAULT_FS) + 'px';
         }
       });
     });
@@ -316,6 +329,16 @@
     monoBtn.title = 'Toggle code/monospace';
     monoBtn.textContent = '</>';
 
+    var fontDownBtn = document.createElement('button');
+    fontDownBtn.className = 'quicknote-fontsize';
+    fontDownBtn.title = 'Smaller text';
+    fontDownBtn.textContent = 'A−';
+
+    var fontUpBtn = document.createElement('button');
+    fontUpBtn.className = 'quicknote-fontsize';
+    fontUpBtn.title = 'Larger text';
+    fontUpBtn.textContent = 'A+';
+
     var minimizeBtn = document.createElement('button');
     minimizeBtn.className = 'quicknote-minimize';
     minimizeBtn.title = 'Minimize';
@@ -331,6 +354,8 @@
     header.appendChild(scopeBtn);
     header.appendChild(copyBtn);
     header.appendChild(monoBtn);
+    header.appendChild(fontDownBtn);
+    header.appendChild(fontUpBtn);
     header.appendChild(minimizeBtn);
     header.appendChild(deleteBtn);
 
@@ -339,6 +364,7 @@
     textarea.placeholder = 'Write your note...';
     textarea.value = note.content || '';
     textarea.spellcheck = false;
+    textarea.style.fontSize = clampFontSize(note.fontSize || DEFAULT_FS) + 'px';
 
     var footer = document.createElement('div');
     footer.className = 'quicknote-footer';
@@ -419,7 +445,7 @@
       } else if (isResizing) {
         var newWidth = e.clientX - container.offsetLeft + window.scrollX;
         var newHeight = e.clientY - container.offsetTop + window.scrollY;
-        if (newWidth > 224) { card.style.width = newWidth + 'px'; note.width = newWidth; }
+        if (newWidth > 264) { card.style.width = newWidth + 'px'; note.width = newWidth; }
         if (newHeight > 110) { card.style.height = newHeight + 'px'; note.height = newHeight; }
       }
     }
@@ -494,6 +520,15 @@
       updateNote(note);
     };
     if (note.mono) monoBtn.classList.add('quicknote-mono-active');
+
+    function changeFontSize(delta) {
+      note.fontSize = clampFontSize((note.fontSize || DEFAULT_FS) + delta);
+      textarea.style.fontSize = note.fontSize + 'px';
+      note.updatedAt = Date.now();
+      updateNote(note);
+    }
+    fontDownBtn.onclick = function (e) { e.stopPropagation(); changeFontSize(-2); };
+    fontUpBtn.onclick = function (e) { e.stopPropagation(); changeFontSize(2); };
 
     colorPick.onclick = function (e) { e.stopPropagation(); };
     colorPick.oninput = function () {
@@ -596,6 +631,7 @@
       color: scope === 'global' ? '#dbeafe' : '#fef9c3',
       scope: scope || 'page',
       mono: false,
+      fontSize: DEFAULT_FS,
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
