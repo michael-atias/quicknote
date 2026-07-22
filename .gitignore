@@ -19,3 +19,6 @@ yarn-error.log*
 *.crx
 *.pem
 web-ext-artifacts/
+
+# Local-only store submission notes
+STORE_LISTING.md
