@@ -349,3 +349,72 @@ body {
   color: #6b7280;
   line-height: 1.4;
 }
+
+/* ============================================================
+   DARK MODE — follows the OS/browser setting automatically
+   ============================================================ */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: linear-gradient(180deg, #1f2430 0%, #171b24 100%);
+    color: #e5e7eb;
+  }
+
+  .header { border-bottom-color: rgba(255, 255, 255, 0.08); }
+  .title { color: #f3f4f6; }
+  .subtitle { color: #9ca3af; }
+
+  .stat-card { background: #262c3a; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); }
+  .stat-number { color: #f3f4f6; }
+  .stat-label { color: #9ca3af; }
+
+  .tab { background: rgba(255, 255, 255, 0.06); color: #9ca3af; }
+  .tab:hover { background: rgba(255, 255, 255, 0.12); }
+  .tab-active { background: #262c3a; color: #f3f4f6; }
+
+  .panel { background: #1e2430; }
+
+  .hint { color: #9ca3af; }
+
+  .search,
+  .snip-input,
+  .ph-input {
+    background: #2a3140;
+    border-color: #3a4253;
+    color: #e5e7eb;
+  }
+  .search::placeholder,
+  .snip-input::placeholder { color: #6b7280; }
+  .search:focus,
+  .snip-input:focus,
+  .ph-input:focus { border-color: #60a5fa; }
+
+  .note-item { background: #262c3a; border-color: #333b4a; }
+  .note-item:hover { border-color: #3b4a63; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35); }
+  .note-preview { color: #d1d5db; }
+  .note-host { color: #6b7280; }
+  .note-action { background: #2a3140; border-color: #3a4253; color: #d1d5db; }
+  .note-action:hover { background: #333b4a; }
+
+  .cheat-cat-title { color: #e5e7eb; border-bottom-color: #333b4a; }
+  .cheat-item:hover { background: #26303f; }
+  .cheat-payload { color: #e5e7eb; }
+  .cheat-desc { color: #9ca3af; }
+  .cheat-mini:hover { background: rgba(255, 255, 255, 0.1); }
+
+  .btn-mini { background: #2a3140; border-color: #3a4253; color: #e5e7eb; }
+  .btn-mini:hover { background: #333b4a; }
+
+  .snippet-editor { background: #222836; border-color: #333b4a; }
+
+  .ph-box { background: #222836; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5); }
+  .ph-title { color: #f3f4f6; }
+  .ph-label { color: #9ca3af; }
+
+  .empty { color: #9ca3af; }
+  .empty-title { color: #e5e7eb; }
+
+  .backup-msg { background: #14351f; color: #86efac; }
+  .backup-msg.error { background: #3a1a1a; color: #fca5a5; }
+
+  .how-to { background: #1e2430; border-top-color: rgba(255, 255, 255, 0.08); color: #9ca3af; }
+}

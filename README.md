@@ -15,6 +15,7 @@ No accounts, no servers, no tracking — everything is stored locally in your br
 - **One-click copy & code mode** — copy a note's text instantly, and toggle monospace for payloads and code.
 - **Notes manager** — search every note, jump to (“Reveal”) a note on the current page, copy, or delete it from the popup. No more lost notes.
 - **Color themes** — yellow, blue, green, pink.
+- **Dark mode** — the popup follows your system's light/dark setting automatically.
 - **JSON backup** — export and import all your notes and snippets.
 - **Auto-save** — notes save as you type.
 
