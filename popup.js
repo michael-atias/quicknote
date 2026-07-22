@@ -32,6 +32,96 @@ function hostFromUrl(url) {
   try { return new URL(url).host; } catch (e) { return url; }
 }
 
+// --- Placeholders ({{name}}) -------------------------------------------------
+var PLACEHOLDER_RE = /\{\{\s*([\w.\- ]+?)\s*\}\}/g;
+
+function findPlaceholders(text) {
+  var names = [];
+  var seen = {};
+  var m;
+  PLACEHOLDER_RE.lastIndex = 0;
+  while ((m = PLACEHOLDER_RE.exec(text)) !== null) {
+    var name = m[1];
+    if (!seen[name]) { seen[name] = true; names.push(name); }
+  }
+  return names;
+}
+
+function applyPlaceholders(text, values) {
+  return text.replace(PLACEHOLDER_RE, function (whole, name) {
+    return Object.prototype.hasOwnProperty.call(values, name) ? values[name] : whole;
+  });
+}
+
+// Resolves to the filled text, or null if the user cancels. If the snippet has
+// no placeholders it resolves immediately. Uses an in-popup overlay (browser
+// prompt() would close the popup).
+function resolvePlaceholders(text) {
+  return new Promise(function (resolve) {
+    var names = findPlaceholders(text);
+    if (names.length === 0) { resolve(text); return; }
+
+    var overlay = document.createElement('div');
+    overlay.className = 'ph-overlay';
+
+    var box = document.createElement('div');
+    box.className = 'ph-box';
+
+    var title = document.createElement('div');
+    title.className = 'ph-title';
+    title.textContent = 'Fill in the fields';
+    box.appendChild(title);
+
+    var inputs = {};
+    names.forEach(function (name) {
+      var label = document.createElement('label');
+      label.className = 'ph-label';
+      label.textContent = name;
+      var input = document.createElement('input');
+      input.className = 'ph-input';
+      input.type = 'text';
+      input.setAttribute('data-name', name);
+      label.appendChild(input);
+      box.appendChild(label);
+      inputs[name] = input;
+    });
+
+    var actions = document.createElement('div');
+    actions.className = 'ph-actions';
+    var cancel = document.createElement('button');
+    cancel.className = 'btn-mini';
+    cancel.textContent = 'Cancel';
+    var ok = document.createElement('button');
+    ok.className = 'btn-mini btn-mini-primary';
+    ok.textContent = 'Copy';
+    actions.appendChild(cancel);
+    actions.appendChild(ok);
+    box.appendChild(actions);
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    var firstInput = inputs[names[0]];
+    if (firstInput) firstInput.focus();
+
+    function close(result) { overlay.remove(); resolve(result); }
+
+    function submit() {
+      var values = {};
+      names.forEach(function (name) { values[name] = inputs[name].value; });
+      close(applyPlaceholders(text, values));
+    }
+
+    cancel.onclick = function () { close(null); };
+    ok.onclick = submit;
+    overlay.onclick = function (e) { if (e.target === overlay) close(null); };
+    box.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); submit(); }
+      else if (e.key === 'Escape') { e.preventDefault(); close(null); }
+    });
+  });
+}
+
 var COLORS = ['yellow', 'blue', 'green', 'pink'];
 function safeColor(c) { return COLORS.indexOf(c) !== -1 ? c : 'yellow'; }
 
@@ -265,10 +355,22 @@ function renderSnippets(filter) {
     return;
   }
 
+  // Favorites float to the top in their own group; the rest group by category.
+  var favs = items.filter(function (s) { return s.fav; });
+  var rest = items.filter(function (s) { return !s.fav; });
+
+  if (favs.length) {
+    var favTitle = document.createElement('div');
+    favTitle.className = 'cheat-cat-title';
+    favTitle.textContent = '★ Favorites';
+    listEl.appendChild(favTitle);
+    favs.forEach(function (s) { listEl.appendChild(buildSnippetRow(s)); });
+  }
+
   // Group by category (blank category grouped under "Snippets").
   var groups = {};
   var order = [];
-  items.forEach(function (s) {
+  rest.forEach(function (s) {
     var cat = (s.category || '').trim() || 'Snippets';
     if (!groups[cat]) { groups[cat] = []; order.push(cat); }
     groups[cat].push(s);
@@ -297,15 +399,35 @@ function buildSnippetRow(s) {
 
   textWrap.appendChild(payload);
 
-  if (s.label) {
+  var phNames = findPlaceholders(s.text);
+
+  if (s.label || phNames.length) {
     var desc = document.createElement('span');
     desc.className = 'cheat-desc';
-    desc.textContent = s.label;
+    desc.textContent = s.label || '';
+    if (phNames.length) {
+      var badge = document.createElement('span');
+      badge.className = 'cheat-ph';
+      badge.textContent = phNames.length + ' field' + (phNames.length > 1 ? 's' : '');
+      badge.title = 'Fill on copy: ' + phNames.join(', ');
+      if (s.label) desc.appendChild(document.createTextNode(' · '));
+      desc.appendChild(badge);
+    }
     textWrap.appendChild(desc);
   }
 
   var actions = document.createElement('div');
   actions.className = 'cheat-actions';
+
+  var favIcon = document.createElement('button');
+  favIcon.className = 'cheat-mini cheat-fav' + (s.fav ? ' cheat-fav-on' : '');
+  favIcon.title = s.fav ? 'Unfavorite' : 'Favorite (pin to top)';
+  favIcon.textContent = s.fav ? '★' : '☆';
+  favIcon.onclick = function (e) {
+    e.stopPropagation();
+    s.fav = !s.fav;
+    persistSnippets(function () { renderSnippets(currentCheatFilter()); });
+  };
 
   var copyIcon = document.createElement('button');
   copyIcon.className = 'cheat-mini';
@@ -322,6 +444,7 @@ function buildSnippetRow(s) {
   delIcon.title = 'Delete';
   delIcon.textContent = '×';
 
+  actions.appendChild(favIcon);
   actions.appendChild(copyIcon);
   actions.appendChild(editIcon);
   actions.appendChild(delIcon);
@@ -330,10 +453,13 @@ function buildSnippetRow(s) {
   row.appendChild(actions);
 
   function doCopy() {
-    copyToClipboard(s.text).then(function () {
-      copyIcon.textContent = '✓';
-      row.classList.add('copied');
-      setTimeout(function () { copyIcon.textContent = '⧉'; row.classList.remove('copied'); }, 1000);
+    resolvePlaceholders(s.text).then(function (filled) {
+      if (filled == null) return; // user cancelled
+      copyToClipboard(filled).then(function () {
+        copyIcon.textContent = '✓';
+        row.classList.add('copied');
+        setTimeout(function () { copyIcon.textContent = '⧉'; row.classList.remove('copied'); }, 1000);
+      });
     });
   }
 

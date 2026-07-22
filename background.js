@@ -56,6 +56,22 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
     });
 });
 
+// Keyboard shortcut (default Alt+Shift+N) -> add a note on the current page.
+chrome.commands.onCommand.addListener(function (command) {
+  if (command !== 'add-note') return;
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    var tab = tabs[0];
+    if (!tab) return;
+    if (isRestrictedUrl(tab.url)) {
+      flashBadge('!', '#ef4444');
+      return;
+    }
+    chrome.tabs
+      .sendMessage(tab.id, { action: 'createNote', scope: 'page', selectedText: '', atViewport: true })
+      .catch(function () { flashBadge('!', '#f59e0b'); });
+  });
+});
+
 function flashBadge(text, color) {
   chrome.action.setBadgeText({ text: text });
   chrome.action.setBadgeBackgroundColor({ color: color });

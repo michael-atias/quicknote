@@ -207,6 +207,10 @@ body {
 .cheat-mini:hover { background: rgba(0, 0, 0, 0.07); color: #2563eb; }
 .cheat-mini-del { color: #d1a0a0; }
 .cheat-mini-del:hover { background: #fee2e2; color: #dc2626; }
+.cheat-fav { color: #cbd5e1; }
+.cheat-fav:hover { color: #f59e0b; background: rgba(0, 0, 0, 0.07); }
+.cheat-fav-on { color: #f59e0b; }
+.cheat-fav-on:hover { color: #f59e0b; }
 .cheat-item.copied .cheat-mini { color: #059669; }
 
 /* Cheat sheet toolbar + editor */
@@ -252,6 +256,57 @@ body {
   font-family: 'SFMono-Regular', Consolas, monospace;
 }
 .snippet-editor-actions { display: flex; justify-content: flex-end; gap: 6px; }
+
+/* Placeholder badge on a snippet row */
+.cheat-ph {
+  font-size: 9px;
+  font-weight: 700;
+  color: #2563eb;
+  background: #dbeafe;
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-family: -apple-system, sans-serif;
+}
+
+/* Placeholder fill overlay */
+.ph-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: panel-fade 0.15s ease;
+}
+.ph-box {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  width: 260px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+.ph-title { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 10px; }
+.ph-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+.ph-input {
+  width: 100%;
+  margin-top: 3px;
+  padding: 7px 9px;
+  border: 1px solid #e5e7eb;
+  border-radius: 7px;
+  font-size: 13px;
+  outline: none;
+}
+.ph-input:focus { border-color: #93c5fd; }
+.ph-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 4px; }
 
 /* Backup */
 .btn {

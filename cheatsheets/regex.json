@@ -1,0 +1,27 @@
+{
+  "app": "QuickNote",
+  "type": "cheatsheet",
+  "name": "Regex",
+  "version": 1,
+  "description": "Common regular-expression building blocks and ready patterns.",
+  "snippets": [
+    { "category": "Anchors & classes", "label": "Start / end of string", "text": "^...$" },
+    { "category": "Anchors & classes", "label": "Word / digit / whitespace", "text": "\\w  \\d  \\s" },
+    { "category": "Anchors & classes", "label": "Any char except newline", "text": "." },
+    { "category": "Anchors & classes", "label": "Character set / range", "text": "[a-zA-Z0-9_]" },
+
+    { "category": "Quantifiers", "label": "0+ / 1+ / optional", "text": "*  +  ?" },
+    { "category": "Quantifiers", "label": "Exactly n / n-to-m", "text": "{3}  {2,5}" },
+    { "category": "Quantifiers", "label": "Lazy (non-greedy)", "text": "*?  +?" },
+
+    { "category": "Groups", "label": "Capture / non-capture", "text": "(...)  (?:...)" },
+    { "category": "Groups", "label": "Named group", "text": "(?<name>...)" },
+    { "category": "Groups", "label": "Lookahead / lookbehind", "text": "(?=...)  (?<=...)" },
+
+    { "category": "Ready patterns", "label": "Email (simple)", "text": "[\\w.+-]+@[\\w-]+\\.[\\w.-]+" },
+    { "category": "Ready patterns", "label": "URL", "text": "https?://[\\w.-]+(?:/[\\w./?%&=-]*)?" },
+    { "category": "Ready patterns", "label": "IPv4", "text": "\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b" },
+    { "category": "Ready patterns", "label": "Date YYYY-MM-DD", "text": "\\d{4}-\\d{2}-\\d{2}" },
+    { "category": "Ready patterns", "label": "Hex color", "text": "#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\\b" }
+  ]
+}

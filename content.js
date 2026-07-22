@@ -69,7 +69,14 @@
   // --- Messages from background / popup --------------------------------------
   chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.action === 'createNote') {
-      createNote(lastClickX, lastClickY, request.selectedText || '', request.scope || 'page');
+      var nx = lastClickX;
+      var ny = lastClickY;
+      if (request.atViewport) {
+        // Keyboard shortcut: no click point — drop it into the visible area.
+        nx = window.scrollX + Math.max(20, Math.round(window.innerWidth / 2) - 130);
+        ny = window.scrollY + Math.round(window.innerHeight / 3);
+      }
+      createNote(nx, ny, request.selectedText || '', request.scope || 'page');
     } else if (request.action === 'revealNote') {
       revealNote(request.noteId);
       sendResponse({ ok: true });

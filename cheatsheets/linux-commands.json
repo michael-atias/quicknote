@@ -1,0 +1,29 @@
+{
+  "app": "QuickNote",
+  "type": "cheatsheet",
+  "name": "Linux commands",
+  "version": 1,
+  "description": "Everyday Linux/bash commands for the terminal.",
+  "snippets": [
+    { "category": "Files", "label": "List, long + hidden", "text": "ls -lah" },
+    { "category": "Files", "label": "Disk usage of a folder", "text": "du -sh ./*" },
+    { "category": "Files", "label": "Free disk space", "text": "df -h" },
+    { "category": "Files", "label": "Find files by name", "text": "find . -name '*.txt'" },
+
+    { "category": "Search", "label": "Recursive grep", "text": "grep -rn 'pattern' ." },
+    { "category": "Search", "label": "Case-insensitive grep", "text": "grep -i 'pattern' file" },
+
+    { "category": "Processes", "label": "Find a process", "text": "ps aux | grep name" },
+    { "category": "Processes", "label": "Kill by PID", "text": "kill -9 PID" },
+    { "category": "Processes", "label": "What's on a port", "text": "lsof -i :8080" },
+
+    { "category": "Permissions", "label": "Make executable", "text": "chmod +x script.sh" },
+    { "category": "Permissions", "label": "Change owner", "text": "sudo chown user:group file" },
+
+    { "category": "Network", "label": "Download a file", "text": "curl -O https://example.com/file" },
+    { "category": "Network", "label": "Test an endpoint", "text": "curl -i https://example.com" },
+
+    { "category": "Archives", "label": "Create tar.gz", "text": "tar -czf out.tar.gz folder/" },
+    { "category": "Archives", "label": "Extract tar.gz", "text": "tar -xzf archive.tar.gz" }
+  ]
+}

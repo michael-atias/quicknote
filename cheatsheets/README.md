@@ -8,9 +8,16 @@ Ready-made snippet packs you can import into QuickNote. Open the extension popup
 |---|---|
 | `sql-injection.json` | Common SQLi payloads (UNION, column count, DB version, blind, time-based) |
 | `xss.json` | Cross-site scripting probes and filter bypasses |
-| `git-commands.json` | Everyday Git commands (a non-security example) |
+| `command-injection.json` | OS command-injection separators and probes |
+| `regex.json` | Regular-expression building blocks and ready patterns |
+| `linux-commands.json` | Everyday Linux/bash terminal commands |
+| `docker.json` | Common Docker CLI commands |
+| `git-commands.json` | Everyday Git commands |
+| `email-templates.json` | Reusable email/reply snippets (uses `{{placeholders}}`) |
 
-> ⚠️ The security packs are for **authorized testing and education only** — PortSwigger Web Security Academy, your own lab environments, or systems you have explicit permission to test.
+> ⚠️ The security packs (`sql-injection`, `xss`, `command-injection`) are for **authorized testing and education only** — PortSwigger Web Security Academy, your own lab environments, or systems you have explicit permission to test.
+
+**Tip:** snippets can contain `{{placeholders}}` — QuickNote will prompt you to fill them in when you copy. See `email-templates.json` for an example.
 
 ## File format
 
