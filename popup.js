@@ -32,6 +32,29 @@ function hostFromUrl(url) {
   try { return new URL(url).host; } catch (e) { return url; }
 }
 
+// --- Import validation (defense-in-depth) -----------------------------------
+// Every note that comes from an imported file is passed through this so only
+// well-formed, bounded values ever reach storage.
+function num(v, def) { var n = Number(v); return isFinite(n) ? n : def; }
+
+function sanitizeNote(n) {
+  if (!n || typeof n !== 'object') return null;
+  return {
+    id: typeof n.id === 'string' && n.id ? n.id
+      : 'note_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+    content: typeof n.content === 'string' ? n.content : '',
+    x: Math.max(0, num(n.x, 40)),
+    y: Math.max(0, num(n.y, 40)),
+    width: Math.min(1600, Math.max(160, num(n.width, 260))),
+    height: Math.min(1600, Math.max(80, num(n.height, 190))),
+    color: toHex(n.color),
+    scope: n.scope === 'global' ? 'global' : 'page',
+    mono: !!n.mono,
+    createdAt: num(n.createdAt, Date.now()),
+    updatedAt: num(n.updatedAt, Date.now())
+  };
+}
+
 // --- Placeholders ({{name}}) -------------------------------------------------
 var PLACEHOLDER_RE = /\{\{\s*([\w.\- ]+?)\s*\}\}/g;
 
@@ -556,13 +579,13 @@ function importSnippets(file) {
 
     // Dedup against existing by text+label.
     var seen = {};
-    snippets.forEach(function (s) { seen[(s.text || '') + ' ' + (s.label || '')] = true; });
+    snippets.forEach(function (s) { seen[(s.text || '') + ' ' + (s.label || '')] = true; });
 
     var added = 0;
     incoming.forEach(function (raw) {
       var norm = normalizeSnippet(raw);
       if (!norm) return;
-      var key = norm.text + ' ' + norm.label;
+      var key = norm.text + ' ' + norm.label;
       if (seen[key]) return;
       seen[key] = true;
       snippets.push(norm);
@@ -651,22 +674,26 @@ function importNotes(file) {
       var global = result.global || [];
       var added = 0;
 
-      // Merge page notes, skipping duplicate IDs.
+      // Merge page notes, skipping duplicate IDs. Every incoming note is
+      // sanitized so only well-formed, bounded values reach storage.
       var incoming = data.notes || {};
       Object.keys(incoming).forEach(function (url) {
+        if (!Array.isArray(incoming[url])) return;
         if (!buckets[url]) buckets[url] = [];
         var existingIds = {};
         buckets[url].forEach(function (n) { existingIds[n.id] = true; });
-        incoming[url].forEach(function (n) {
-          if (!existingIds[n.id]) { buckets[url].push(n); added++; }
+        incoming[url].forEach(function (raw) {
+          var n = sanitizeNote(raw);
+          if (n && !existingIds[n.id]) { buckets[url].push(n); existingIds[n.id] = true; added++; }
         });
       });
 
       // Merge global notes.
       var globalIds = {};
       global.forEach(function (n) { globalIds[n.id] = true; });
-      (data.global || []).forEach(function (n) {
-        if (!globalIds[n.id]) { global.push(n); added++; }
+      (Array.isArray(data.global) ? data.global : []).forEach(function (raw) {
+        var n = sanitizeNote(raw);
+        if (n) { n.scope = 'global'; if (!globalIds[n.id]) { global.push(n); globalIds[n.id] = true; added++; } }
       });
 
       // Merge snippets if the backup carries them (dedup by text+label).

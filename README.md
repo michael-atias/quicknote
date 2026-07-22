@@ -51,7 +51,7 @@ No accounts, no servers, no tracking — everything is stored locally in your br
 | `activeTab` | Talk to the current tab to place and reveal notes |
 | `scripting` | Inject the note script into a tab on demand, so notes work without a page refresh |
 
-The content script runs on all pages so notes can appear anywhere. It never sends data anywhere — there is no network code.
+The content script runs on all pages so notes can appear anywhere. It never sends data anywhere — there is no network code. See [PRIVACY.md](PRIVACY.md) for the full privacy policy.
 
 ## 🗂️ Project structure
 
