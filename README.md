@@ -10,11 +10,11 @@ No accounts, no servers, no tracking — everything is stored locally in your br
 
 - **Sticky notes anywhere** — right-click a page and add a draggable, resizable note.
 - **Global notes** — pin any note to show on *every* page (the 📌 button). Perfect for a cheat sheet that follows you across sites (and survives PortSwigger's changing lab subdomains).
-- **Built-in SQLi cheat sheet** — categorized payloads (UNION, column count, DB version, blind, time-based…) with one-click copy.
+- **Your own cheat sheet** — build a personal snippet library (payloads, commands, boilerplate) with click-to-copy, categories, and search. Import ready-made packs from the [`cheatsheets/`](cheatsheets/) folder (SQLi, XSS, Git…) or export your own to share.
 - **One-click copy & code mode** — copy a note's text instantly, and toggle monospace for payloads and code.
 - **Notes manager** — search every note, jump to (“Reveal”) a note on the current page, copy, or delete it from the popup. No more lost notes.
 - **Color themes** — yellow, blue, green, pink.
-- **JSON backup** — export and import all your notes.
+- **JSON backup** — export and import all your notes and snippets.
 - **Auto-save** — notes save as you type.
 
 ![Popup](icons/screenshot-3-popup.png)
@@ -56,7 +56,8 @@ manifest.json     Extension config (MV3)
 background.js     Service worker: context menu + storage (page & global notes)
 content.js        Injected script: renders/drag/resize/copy notes on the page
 content.css       Note styling
-popup.html/css/js  Toolbar UI: notes manager, cheat sheet, backup
+popup.html/css/js  Toolbar UI: notes manager, snippet cheat sheet, backup
+cheatsheets/      Importable snippet packs (SQLi, XSS, Git…)
 icons/            Icons + store screenshots
 ```
 

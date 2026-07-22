@@ -43,11 +43,33 @@
     </div>
   </section>
 
-  <!-- CHEAT SHEET -->
+  <!-- CHEAT SHEET (user-owned snippets) -->
   <section class="panel" id="panel-cheatsheet">
-    <p class="hint">Click any payload to copy it. Built for PortSwigger / SQLi practice.</p>
-    <input type="search" id="cheatSearch" class="search" placeholder="Filter payloads…" autocomplete="off">
+    <div class="cheat-toolbar">
+      <button id="addSnippetBtn" class="btn-mini btn-mini-primary">＋ Add</button>
+      <label class="btn-mini" for="importCheatFile">Import</label>
+      <input type="file" id="importCheatFile" accept="application/json,.json" hidden>
+      <button id="exportCheatBtn" class="btn-mini">Export</button>
+    </div>
+
+    <input type="search" id="cheatSearch" class="search" placeholder="Filter snippets…" autocomplete="off">
+
+    <div id="snippetEditor" class="snippet-editor" hidden>
+      <input type="text" id="snipLabel" class="snip-input" placeholder="Label (optional, e.g. ‘UNION – column count’)">
+      <input type="text" id="snipCategory" class="snip-input" placeholder="Category (optional, e.g. ‘SQLi’)">
+      <textarea id="snipText" class="snip-input snip-text" placeholder="Snippet text — payload, command, boilerplate…" spellcheck="false"></textarea>
+      <div class="snippet-editor-actions">
+        <button id="snipCancel" class="btn-mini">Cancel</button>
+        <button id="snipSave" class="btn-mini btn-mini-primary">Save</button>
+      </div>
+    </div>
+
+    <div id="cheatMsg" class="backup-msg" hidden></div>
     <div id="cheatList" class="cheat-list"></div>
+    <div id="cheatEmpty" class="empty" hidden>
+      No snippets yet. Click <strong>＋ Add</strong> to create one, or <strong>Import</strong> a cheat-sheet file.<br>
+      Ready-made packs live in the <code>cheatsheets/</code> folder of the repo.
+    </div>
   </section>
 
   <!-- BACKUP -->
