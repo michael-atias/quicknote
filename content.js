@@ -43,14 +43,19 @@
     return luminance > 0.6 ? '#1f2937' : '#f9fafb';
   }
 
-  // Apply a color to a note's card, text, and footer.
+  // Apply a color to a note's card. Sets a --qn-fg custom property that the
+  // header text, icons, drag label, and footer all inherit, so every control
+  // stays readable on any background (light or dark).
   function applyNoteColor(card, textarea, footer, value) {
     var hex = toHex(value);
     var txt = contrastText(hex);
+    var isDark = txt !== '#1f2937';
     card.style.background = hex;
     card.style.border = '1px solid rgba(0, 0, 0, 0.15)';
+    card.style.setProperty('--qn-fg', txt);
     if (textarea) textarea.style.color = txt;
-    if (footer) footer.style.color = txt === '#f9fafb' ? 'rgba(255,255,255,0.75)' : '';
+    var header = card.querySelector('.quicknote-header');
+    if (header) header.style.background = isDark ? 'rgba(0, 0, 0, 0.22)' : 'rgba(255, 255, 255, 0.4)';
   }
 
   // --- SPA / "invisible" navigation handling ---------------------------------
