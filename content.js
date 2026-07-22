@@ -147,12 +147,20 @@
         var obj = el.__quicknoteNote;
         if (!obj) return;
         var textarea = el.querySelector('.quicknote-content');
-        var beingEdited = textarea && document.activeElement === textarea;
 
-        // Sync text (unless the user is typing in this note right here).
-        if (textarea && !beingEdited && obj.content !== n.content) {
+        // Only hold back a sync while the user is ACTIVELY typing in this note
+        // in this tab (last keystroke < 1.5s ago). Merely having it focused no
+        // longer blocks updates, so global notes keep syncing across tabs.
+        var typingHere = el.__quicknoteLastEdit && (Date.now() - el.__quicknoteLastEdit < 1500);
+
+        if (textarea && !typingHere && obj.content !== n.content) {
+          var wasFocused = document.activeElement === textarea;
           textarea.value = n.content;
           obj.content = n.content;
+          if (wasFocused) {
+            // Keep the caret at the end so the incoming text isn't disruptive.
+            try { textarea.setSelectionRange(n.content.length, n.content.length); } catch (e) { /* no-op */ }
+          }
         }
         // Sync color.
         if (obj.color !== n.color) {
@@ -490,6 +498,7 @@
 
     var saveTimeout;
     textarea.oninput = function () {
+      container.__quicknoteLastEdit = Date.now(); // marks "actively typing here"
       clearTimeout(saveTimeout);
       saveTimeout = setTimeout(function () {
         note.content = textarea.value;
