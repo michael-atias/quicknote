@@ -12,7 +12,6 @@ No accounts, no servers, no tracking — everything is stored locally in your br
 - **Global notes** — pin any note to show on *every* page (the 📌 button). Perfect for a cheat sheet that follows you across sites (and survives PortSwigger's changing lab subdomains).
 - **Your own cheat sheet** — build a personal snippet library (payloads, commands, boilerplate) with click-to-copy, categories, favorites, and search. Import ready-made packs from the [`cheatsheets/`](cheatsheets/) folder (SQLi, XSS, command injection, regex, Linux, Docker, Git, email templates…) or export your own to share.
 - **Snippet placeholders** — put `{{name}}` in a snippet and QuickNote prompts you to fill it in when you copy. Great for payloads and templates.
-- **Keyboard shortcut** — press **Ctrl+Shift+Y** to drop a note on the current page without the menu (customizable at `chrome://extensions/shortcuts`).
 - **One-click copy & code mode** — copy a note's text instantly, and toggle monospace for payloads and code.
 - **Notes manager** — search every note, jump to (“Reveal”) a note on the current page, copy, or delete it from the popup. No more lost notes.
 - **Color themes** — yellow, blue, green, pink.
@@ -46,8 +45,9 @@ No accounts, no servers, no tracking — everything is stored locally in your br
 | Permission | Why |
 |---|---|
 | `storage` | Save your notes locally |
-| `contextMenus` | Add the right-click "Add QuickNote" items |
+| `contextMenus` | Add the right-click "Add QuickNote" item |
 | `activeTab` | Talk to the current tab to place and reveal notes |
+| `scripting` | Inject the note script into a tab on demand, so notes work without a page refresh |
 
 The content script runs on all pages so notes can appear anywhere. It never sends data anywhere — there is no network code.
 

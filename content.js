@@ -7,6 +7,12 @@
 (function () {
   'use strict';
 
+  // Guard against loading twice (manifest content_scripts + on-demand injection
+  // could otherwise both run, duplicating listeners and creating several notes
+  // per action). If we're already loaded, do nothing.
+  if (window.__quicknoteLoaded) return;
+  window.__quicknoteLoaded = true;
+
   var notes = [];
   var lastClickX = 100;
   var lastClickY = 100;

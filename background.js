@@ -44,33 +44,34 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
     return;
   }
 
-  chrome.tabs
-    .sendMessage(tab.id, {
-      action: 'createNote',
-      scope: 'page',
-      selectedText: info.selectionText || ''
-    })
-    .catch(function () {
-      // Content script not present (e.g. page loaded before install/reload).
-      flashBadge('!', '#f59e0b');
-    });
-});
-
-// Keyboard shortcut (default Alt+Shift+N) -> add a note on the current page.
-chrome.commands.onCommand.addListener(function (command) {
-  if (command !== 'add-note') return;
-  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    var tab = tabs[0];
-    if (!tab) return;
-    if (isRestrictedUrl(tab.url)) {
-      flashBadge('!', '#ef4444');
-      return;
-    }
-    chrome.tabs
-      .sendMessage(tab.id, { action: 'createNote', scope: 'page', selectedText: '', atViewport: true })
-      .catch(function () { flashBadge('!', '#f59e0b'); });
+  createNoteInTab(tab.id, {
+    action: 'createNote',
+    scope: 'page',
+    selectedText: info.selectionText || ''
   });
 });
+
+// Sends a createNote message to the tab. If the content script isn't there yet
+// (e.g. the tab was open before the extension was reloaded/installed), inject
+// it on the fly, then send the message. This is what lets notes work without a
+// manual page refresh. Injection only happens when messaging fails, so pages
+// that already have the content script never get a duplicate.
+function createNoteInTab(tabId, payload) {
+  chrome.tabs.sendMessage(tabId, payload, function () {
+    if (!chrome.runtime.lastError) return; // delivered fine
+    chrome.scripting.insertCSS({ target: { tabId: tabId }, files: ['content.css'] }, function () {
+      chrome.scripting.executeScript({ target: { tabId: tabId }, files: ['content.js'] }, function () {
+        if (chrome.runtime.lastError) { flashBadge('!', '#f59e0b'); return; }
+        // Give the freshly injected script a moment to register its listener.
+        setTimeout(function () {
+          chrome.tabs.sendMessage(tabId, payload, function () {
+            if (chrome.runtime.lastError) flashBadge('!', '#f59e0b');
+          });
+        }, 60);
+      });
+    });
+  });
+}
 
 function flashBadge(text, color) {
   chrome.action.setBadgeText({ text: text });
