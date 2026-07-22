@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "QuickNote - Webpage Annotator",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "description": "Sticky notes for any webpage, plus a built-in payload cheat sheet. Global notes, one-click copy, search, and JSON backup. Great for research, studying, and pentest practice.",
   "permissions": [
     "storage",
@@ -21,7 +21,7 @@
   ],
   "commands": {
     "add-note": {
-      "suggested_key": { "default": "Alt+Shift+N" },
+      "suggested_key": { "default": "Ctrl+Shift+Y" },
       "description": "Add a QuickNote on the current page"
     }
   },
