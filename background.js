@@ -19,16 +19,13 @@ const RESTRICTED_PREFIXES = [
 ];
 
 chrome.runtime.onInstalled.addListener(function () {
-  chrome.contextMenus.create({
-    id: 'add-quicknote',
-    title: 'Add QuickNote here',
-    contexts: ['page', 'selection']
-  });
-
-  chrome.contextMenus.create({
-    id: 'add-quicknote-global',
-    title: 'Add global QuickNote (shows on every page)',
-    contexts: ['page', 'selection']
+  // Remove any stale items first so reloads/updates never leave duplicates.
+  chrome.contextMenus.removeAll(function () {
+    chrome.contextMenus.create({
+      id: 'add-quicknote',
+      title: 'Add QuickNote here',
+      contexts: ['page', 'selection']
+    });
   });
 
   chrome.storage.local.get(['notes', 'global'], function (result) {
@@ -40,9 +37,7 @@ chrome.runtime.onInstalled.addListener(function () {
 // --- Context menu -> ask content script to create a note ---------------------
 
 chrome.contextMenus.onClicked.addListener(function (info, tab) {
-  if (info.menuItemId !== 'add-quicknote' && info.menuItemId !== 'add-quicknote-global') {
-    return;
-  }
+  if (info.menuItemId !== 'add-quicknote') return;
 
   if (isRestrictedUrl(tab.url)) {
     flashBadge('!', '#ef4444');
@@ -52,7 +47,7 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
   chrome.tabs
     .sendMessage(tab.id, {
       action: 'createNote',
-      scope: info.menuItemId === 'add-quicknote-global' ? 'global' : 'page',
+      scope: 'page',
       selectedText: info.selectionText || ''
     })
     .catch(function () {
@@ -92,6 +87,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       return true;
     case 'deleteNote':
       handleDeleteNote(request, sendResponse);
+      return true;
+    case 'changeScope':
+      handleChangeScope(request, sendResponse);
       return true;
     case 'getStats':
       handleGetStats(sendResponse);
@@ -188,6 +186,38 @@ function handleDeleteNote(request, sendResponse) {
     } else {
       sendResponse({ success: false });
     }
+  });
+}
+
+// Moves a note between page-scope and global-scope atomically. request.note
+// already carries its NEW scope; we remove it from both possible locations by
+// id, then insert it into the correct bucket.
+function handleChangeScope(request, sendResponse) {
+  var note = request.note;
+  var url = normalizeUrl(request.url);
+  chrome.storage.local.get(['notes', 'global'], function (result) {
+    var notes = result.notes || {};
+    var global = result.global || [];
+
+    // Remove from the page bucket for this URL, if present.
+    if (notes[url]) {
+      notes[url] = notes[url].filter(function (n) { return n.id !== note.id; });
+      if (notes[url].length === 0) delete notes[url];
+    }
+    // Remove from global, if present.
+    global = global.filter(function (n) { return n.id !== note.id; });
+
+    // Insert into the target bucket.
+    if (note.scope === 'global') {
+      global.push(note);
+    } else {
+      if (!notes[url]) notes[url] = [];
+      notes[url].push(note);
+    }
+
+    chrome.storage.local.set({ notes: notes, global: global }, function () {
+      sendResponse({ success: true });
+    });
   });
 }
 

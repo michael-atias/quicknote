@@ -121,7 +121,8 @@
 .quicknote-minimize,
 .quicknote-delete,
 .quicknote-copy,
-.quicknote-mono {
+.quicknote-mono,
+.quicknote-scope {
   width: 24px;
   height: 24px;
   border: none;
@@ -137,13 +138,23 @@
 }
 
 .quicknote-copy,
-.quicknote-mono {
+.quicknote-mono,
+.quicknote-scope {
   font-size: 13px;
 }
 
 .quicknote-copy:hover,
-.quicknote-mono:hover {
+.quicknote-mono:hover,
+.quicknote-scope:hover {
   background: rgba(0, 0, 0, 0.1);
+}
+
+/* Pin/global toggle: dim by default, highlighted when the note is global. */
+.quicknote-scope { opacity: 0.5; filter: grayscale(1); transition: opacity 0.12s, filter 0.12s; }
+.quicknote-scope.quicknote-scope-active {
+  opacity: 1;
+  filter: none;
+  background: rgba(59, 130, 246, 0.16);
 }
 
 .quicknote-copy.quicknote-copied {

@@ -190,6 +190,13 @@
       colors.appendChild(span);
     });
 
+    var scopeBtn = document.createElement('button');
+    scopeBtn.className = 'quicknote-scope' + (isGlobal ? ' quicknote-scope-active' : '');
+    scopeBtn.title = isGlobal
+      ? 'Global note (shows on every page) — click to make it page-only'
+      : 'Pin to all pages (make this a global note)';
+    scopeBtn.textContent = '📌';
+
     var copyBtn = document.createElement('button');
     copyBtn.className = 'quicknote-copy';
     copyBtn.title = 'Copy note text';
@@ -212,6 +219,7 @@
 
     header.appendChild(dragArea);
     header.appendChild(colors);
+    header.appendChild(scopeBtn);
     header.appendChild(copyBtn);
     header.appendChild(monoBtn);
     header.appendChild(minimizeBtn);
@@ -333,6 +341,27 @@
     copyBtn.onclick = function (e) {
       e.stopPropagation();
       copyText(textarea.value, copyBtn);
+    };
+
+    // Pin toggle: move the note between page-scope and global-scope.
+    scopeBtn.onclick = function (e) {
+      e.stopPropagation();
+      note.scope = note.scope === 'global' ? 'page' : 'global';
+      var nowGlobal = note.scope === 'global';
+      scopeBtn.classList.toggle('quicknote-scope-active', nowGlobal);
+      scopeBtn.title = nowGlobal
+        ? 'Global note (shows on every page) — click to make it page-only'
+        : 'Pin to all pages (make this a global note)';
+      pin.textContent = nowGlobal ? '🌐' : '📝';
+      pin.classList.toggle('quicknote-pin-global', nowGlobal);
+      dragArea.textContent = nowGlobal ? '🌐 Global · drag' : 'Drag here';
+      footer.textContent = (nowGlobal ? 'Global · ' : '') + formatDate(note.createdAt);
+      note.updatedAt = Date.now();
+      chrome.runtime.sendMessage({
+        action: 'changeScope',
+        url: window.location.href,
+        note: note
+      });
     };
 
     monoBtn.onclick = function (e) {

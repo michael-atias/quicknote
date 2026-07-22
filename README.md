@@ -9,7 +9,7 @@ No accounts, no servers, no tracking — everything is stored locally in your br
 ## ✨ Features
 
 - **Sticky notes anywhere** — right-click a page and add a draggable, resizable note.
-- **Global notes** — pin a note that shows on *every* page. Perfect for a cheat sheet that follows you across sites (and survives PortSwigger's changing lab subdomains).
+- **Global notes** — pin any note to show on *every* page (the 📌 button). Perfect for a cheat sheet that follows you across sites (and survives PortSwigger's changing lab subdomains).
 - **Built-in SQLi cheat sheet** — categorized payloads (UNION, column count, DB version, blind, time-based…) with one-click copy.
 - **One-click copy & code mode** — copy a note's text instantly, and toggle monospace for payloads and code.
 - **Notes manager** — search every note, jump to (“Reveal”) a note on the current page, copy, or delete it from the popup. No more lost notes.
@@ -31,10 +31,10 @@ No accounts, no servers, no tracking — everything is stored locally in your br
 
 ## 📖 How to use
 
-1. **Right-click** anywhere on a page.
-2. Choose **“Add QuickNote here”** — or **“Add global QuickNote”** for a note shown on every page.
-3. Write your note. It **auto-saves**.
-4. Drag by the header, resize from the corner, pick a color, toggle code mode, or copy the text.
+1. **Right-click** anywhere on a page and choose **“Add QuickNote here”**.
+2. Write your note. It **auto-saves**.
+3. Drag by the header, resize from the corner, pick a color, toggle code mode, or copy the text.
+4. Hit the **📌 pin** button to make a note *global* — it will then show on every page.
 5. Open the toolbar popup to search all notes, browse the cheat sheet, or back up your data.
 
 ![Right-click menu](icons/screenshot-1-right-click.png)
@@ -56,7 +56,7 @@ manifest.json     Extension config (MV3)
 background.js     Service worker: context menu + storage (page & global notes)
 content.js        Injected script: renders/drag/resize/copy notes on the page
 content.css       Note styling
-popup.html/css/js Toolbar UI: notes manager, cheat sheet, backup
+popup.html/css/js  Toolbar UI: notes manager, cheat sheet, backup
 icons/            Icons + store screenshots
 ```
 
