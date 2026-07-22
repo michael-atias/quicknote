@@ -1,0 +1,25 @@
+{
+  "app": "QuickNote",
+  "type": "cheatsheet",
+  "name": "Git commands",
+  "version": 1,
+  "description": "Everyday Git commands — a non-security example showing snippets work for any workflow.",
+  "snippets": [
+    { "category": "Basics", "label": "Stage everything", "text": "git add -A" },
+    { "category": "Basics", "label": "Commit with message", "text": "git commit -m \"message\"" },
+    { "category": "Basics", "label": "Push current branch", "text": "git push" },
+    { "category": "Basics", "label": "Status (short)", "text": "git status -s" },
+
+    { "category": "Branches", "label": "Create + switch", "text": "git checkout -b feature-name" },
+    { "category": "Branches", "label": "Switch branch", "text": "git switch main" },
+    { "category": "Branches", "label": "Delete local branch", "text": "git branch -d feature-name" },
+
+    { "category": "Undo", "label": "Unstage a file", "text": "git restore --staged path/to/file" },
+    { "category": "Undo", "label": "Discard local changes to a file", "text": "git restore path/to/file" },
+    { "category": "Undo", "label": "Amend last commit", "text": "git commit --amend" },
+    { "category": "Undo", "label": "Soft reset to previous commit", "text": "git reset --soft HEAD~1" },
+
+    { "category": "History", "label": "One-line log", "text": "git log --oneline --graph --decorate" },
+    { "category": "History", "label": "Who changed a line", "text": "git blame path/to/file" }
+  ]
+}

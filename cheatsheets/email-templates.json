@@ -1,0 +1,20 @@
+{
+  "app": "QuickNote",
+  "type": "cheatsheet",
+  "name": "Email templates",
+  "version": 1,
+  "description": "Reusable email/reply snippets. Uses {{placeholders}} you fill in on copy.",
+  "snippets": [
+    { "category": "Openers", "label": "Friendly greeting", "text": "Hi {{name}},\n\nThanks for reaching out — happy to help." },
+    { "category": "Openers", "label": "Following up", "text": "Hi {{name}},\n\nJust following up on my note from {{date}}. Any thoughts?" },
+
+    { "category": "Scheduling", "label": "Propose a meeting", "text": "Would {{day}} at {{time}} work for a quick {{duration}} call? Happy to adjust." },
+    { "category": "Scheduling", "label": "Confirm a meeting", "text": "Confirmed for {{day}} at {{time}}. I'll send a calendar invite shortly." },
+
+    { "category": "Replies", "label": "Acknowledge + timeline", "text": "Thanks, {{name}} — got it. I'll get back to you by {{date}}." },
+    { "category": "Replies", "label": "Politely decline", "text": "Thanks for thinking of me. I won't be able to take this on right now, but I appreciate the offer." },
+
+    { "category": "Closers", "label": "Standard sign-off", "text": "Best,\n{{yourname}}" },
+    { "category": "Closers", "label": "Thanks + next step", "text": "Thanks again — let me know if {{next_step}} works for you.\n\nBest,\n{{yourname}}" }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "app": "QuickNote",
+  "type": "cheatsheet",
+  "name": "Docker",
+  "version": 1,
+  "description": "Common Docker CLI commands.",
+  "snippets": [
+    { "category": "Images", "label": "Build with a tag", "text": "docker build -t name:tag ." },
+    { "category": "Images", "label": "List images", "text": "docker images" },
+    { "category": "Images", "label": "Remove an image", "text": "docker rmi name:tag" },
+
+    { "category": "Containers", "label": "Run interactive + remove on exit", "text": "docker run -it --rm name:tag" },
+    { "category": "Containers", "label": "Run detached + port map", "text": "docker run -d -p 8080:80 name:tag" },
+    { "category": "Containers", "label": "List running", "text": "docker ps" },
+    { "category": "Containers", "label": "List all (incl. stopped)", "text": "docker ps -a" },
+    { "category": "Containers", "label": "Shell into a container", "text": "docker exec -it container bash" },
+    { "category": "Containers", "label": "Follow logs", "text": "docker logs -f container" },
+    { "category": "Containers", "label": "Stop / remove", "text": "docker stop container && docker rm container" },
+
+    { "category": "Compose", "label": "Up (build + detached)", "text": "docker compose up -d --build" },
+    { "category": "Compose", "label": "Down + volumes", "text": "docker compose down -v" },
+
+    { "category": "Cleanup", "label": "Prune everything unused", "text": "docker system prune -af" }
+  ]
+}
