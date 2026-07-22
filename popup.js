@@ -109,6 +109,9 @@ function hostFromUrl(url) {
   try { return new URL(url).host; } catch (e) { return url; }
 }
 
+var COLORS = ['yellow', 'blue', 'green', 'pink'];
+function safeColor(c) { return COLORS.indexOf(c) !== -1 ? c : 'yellow'; }
+
 function flash(el, cls) {
   el.classList.add(cls);
   setTimeout(function () { el.classList.remove(cls); }, 1000);
@@ -195,7 +198,7 @@ function buildNoteItem(entry) {
   top.className = 'note-item-top';
 
   var swatch = document.createElement('span');
-  swatch.className = 'note-swatch note-swatch-' + (note.color || 'yellow');
+  swatch.className = 'note-swatch note-swatch-' + safeColor(note.color);
   top.appendChild(swatch);
 
   if (isGlobal) {

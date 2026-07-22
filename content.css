@@ -10,35 +10,45 @@
 
 /* Pin (minimized state) */
 .quicknote-pin {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   background: linear-gradient(135deg, #fef08a, #fde047);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: move;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s;
   font-size: 18px;
   user-select: none;
+  -webkit-user-select: none;
 }
 
 .quicknote-pin:hover {
-  transform: scale(1.15);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transform: scale(1.18) rotate(-6deg);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+}
+
+.quicknote-pin:active {
+  transform: scale(1.05);
 }
 
 /* Card (expanded state) */
 .quicknote-card {
   min-width: 200px;
   min-height: 120px;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.quicknote-card:focus-within {
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22), 0 2px 10px rgba(0, 0, 0, 0.14);
 }
 
 /* Color themes */
@@ -67,10 +77,13 @@
   display: flex;
   align-items: center;
   padding: 6px 8px;
-  background: rgba(0, 0, 0, 0.06);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   cursor: move;
   user-select: none;
+  -webkit-user-select: none;
 }
 
 .quicknote-drag-area {
@@ -308,6 +321,18 @@
 /* Global notes get a distinct blue pin so they're easy to tell apart. */
 .quicknote-pin-global {
   background: linear-gradient(135deg, #93c5fd, #60a5fa);
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+}
+
+/* Pop-in when a note is freshly created. */
+.quicknote-appear .quicknote-card {
+  animation: quicknote-pop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: top left;
+}
+
+@keyframes quicknote-pop {
+  0%   { opacity: 0; transform: scale(0.85) translateY(-6px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 /* Flash effect when the popup "reveals" a note. */

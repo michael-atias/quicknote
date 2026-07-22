@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "QuickNote - Webpage Annotator",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Sticky notes for any webpage, plus a built-in payload cheat sheet. Global notes, one-click copy, search, and JSON backup. Great for research, studying, and pentest practice.",
   "permissions": [
     "storage",

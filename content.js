@@ -12,6 +12,12 @@
   var lastClickY = 100;
   var lastKnownUrl = location.href;
 
+  // Whitelist of allowed color themes. Any value from storage/import that is
+  // not in this list falls back to 'yellow', so untrusted data can never end
+  // up concatenated into a class name.
+  var COLORS = ['yellow', 'blue', 'green', 'pink'];
+  function safeColor(c) { return COLORS.indexOf(c) !== -1 ? c : 'yellow'; }
+
   // --- SPA / "invisible" navigation handling ---------------------------------
   // Busy pages mutate the DOM constantly, so we must NOT reload notes on every
   // mutation. We debounce and only act when the URL actually changed.
@@ -156,13 +162,13 @@
 
     var pin = document.createElement('div');
     pin.className = 'quicknote-pin' + (isGlobal ? ' quicknote-pin-global' : '');
-    pin.innerHTML = isGlobal ? '&#127760;' : '&#128221;'; // 🌐 vs 📝
+    pin.textContent = isGlobal ? '🌐' : '📝';
     pin.title = isGlobal
       ? 'Global note — click to view, drag to move'
       : 'Click to view, drag to move';
 
     var card = document.createElement('div');
-    card.className = 'quicknote-card quicknote-theme-' + (note.color || 'yellow');
+    card.className = 'quicknote-card quicknote-theme-' + safeColor(note.color);
     card.style.display = 'none';
     card.style.width = (note.width || 260) + 'px';
     card.style.height = (note.height || 190) + 'px';
@@ -454,6 +460,7 @@
           renderNote(note);
           var container = document.querySelector('[data-note-id="' + cssEscape(note.id) + '"]');
           if (container) {
+            container.classList.add('quicknote-appear');
             container.querySelector('.quicknote-pin').style.display = 'none';
             var card = container.querySelector('.quicknote-card');
             card.style.display = 'flex';
