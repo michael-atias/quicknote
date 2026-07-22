@@ -402,6 +402,13 @@
     };
 
     function onMouseMove(e) {
+      // Safety net: if we think we're dragging but no mouse button is actually
+      // held (the mouseup happened off-page, e.g. over the popup or browser UI),
+      // stop immediately so the note doesn't "stick" to the cursor.
+      if ((isDraggingPin || isDraggingCard || isResizing) && e.buttons === 0) {
+        onMouseUp();
+        return;
+      }
       if (isDraggingPin) {
         container.style.left = Math.max(0, e.clientX - pinOffsetX + window.scrollX) + 'px';
         container.style.top = Math.max(0, e.clientY - pinOffsetY + window.scrollY) + 'px';
