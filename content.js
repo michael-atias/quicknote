@@ -289,7 +289,8 @@
 
     var dragArea = document.createElement('div');
     dragArea.className = 'quicknote-drag-area';
-    dragArea.textContent = isGlobal ? '🌐 Global · drag' : 'Drag here';
+    dragArea.textContent = '⠿⠿'; // compact grip handle — never truncates
+    dragArea.title = 'Drag to move';
 
     // Single color picker — choose any color.
     var colorPick = document.createElement('input');
@@ -476,7 +477,6 @@
         : 'Pin to all pages (make this a global note)';
       pin.textContent = nowGlobal ? '🌐' : '📝';
       pin.classList.toggle('quicknote-pin-global', nowGlobal);
-      dragArea.textContent = nowGlobal ? '🌐 Global · drag' : 'Drag here';
       footer.textContent = (nowGlobal ? 'Global · ' : '') + formatDate(note.createdAt);
       note.updatedAt = Date.now();
       chrome.runtime.sendMessage({

@@ -92,11 +92,12 @@
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 1px;
   color: var(--qn-fg);
-  opacity: 0.7;
+  opacity: 0.45;
   cursor: move;
 }
 
