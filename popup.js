@@ -122,8 +122,14 @@ function resolvePlaceholders(text) {
   });
 }
 
-var COLORS = ['yellow', 'blue', 'green', 'pink'];
-function safeColor(c) { return COLORS.indexOf(c) !== -1 ? c : 'yellow'; }
+var LEGACY_COLORS = { yellow: '#fde047', blue: '#93c5fd', green: '#86efac', pink: '#f9a8d4' };
+function toHex(value) {
+  if (typeof value === 'string') {
+    if (/^#[0-9a-fA-F]{6}$/.test(value)) return value.toLowerCase();
+    if (LEGACY_COLORS[value]) return LEGACY_COLORS[value];
+  }
+  return '#fde047';
+}
 
 function flash(el, cls) {
   el.classList.add(cls);
@@ -211,7 +217,8 @@ function buildNoteItem(entry) {
   top.className = 'note-item-top';
 
   var swatch = document.createElement('span');
-  swatch.className = 'note-swatch note-swatch-' + safeColor(note.color);
+  swatch.className = 'note-swatch';
+  swatch.style.background = toHex(note.color);
   top.appendChild(swatch);
 
   if (isGlobal) {

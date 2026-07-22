@@ -18,11 +18,40 @@
   var lastClickY = 100;
   var lastKnownUrl = location.href;
 
-  // Whitelist of allowed color themes. Any value from storage/import that is
-  // not in this list falls back to 'yellow', so untrusted data can never end
-  // up concatenated into a class name.
-  var COLORS = ['yellow', 'blue', 'green', 'pink'];
-  function safeColor(c) { return COLORS.indexOf(c) !== -1 ? c : 'yellow'; }
+  // Notes can be any color. We store a hex string and always validate it before
+  // applying, so untrusted data (e.g. imported JSON) can never inject CSS.
+  var LEGACY_COLORS = {
+    yellow: '#fef9c3', blue: '#dbeafe', green: '#dcfce7', pink: '#fce7f3'
+  };
+  var DEFAULT_COLOR = '#fef9c3';
+
+  // Returns a safe #rrggbb string from any stored value.
+  function toHex(value) {
+    if (typeof value === 'string') {
+      if (/^#[0-9a-fA-F]{6}$/.test(value)) return value.toLowerCase();
+      if (LEGACY_COLORS[value]) return LEGACY_COLORS[value];
+    }
+    return DEFAULT_COLOR;
+  }
+
+  // Pick readable text color (dark or light) for a given background hex.
+  function contrastText(hex) {
+    var r = parseInt(hex.substr(1, 2), 16);
+    var g = parseInt(hex.substr(3, 2), 16);
+    var b = parseInt(hex.substr(5, 2), 16);
+    var luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.6 ? '#1f2937' : '#f9fafb';
+  }
+
+  // Apply a color to a note's card, text, and footer.
+  function applyNoteColor(card, textarea, footer, value) {
+    var hex = toHex(value);
+    var txt = contrastText(hex);
+    card.style.background = hex;
+    card.style.border = '1px solid rgba(0, 0, 0, 0.15)';
+    if (textarea) textarea.style.color = txt;
+    if (footer) footer.style.color = txt === '#f9fafb' ? 'rgba(255,255,255,0.75)' : '';
+  }
 
   // --- SPA / "invisible" navigation handling ---------------------------------
   // Busy pages mutate the DOM constantly, so we must NOT reload notes on every
@@ -73,10 +102,10 @@
   loadNotes();
 
   // --- Live sync across tabs --------------------------------------------------
-  // When notes change in storage (deleted/added in another tab), reconcile the
-  // page without a refresh. We only add missing notes and remove vanished ones;
-  // notes already on screen are left alone so active editing/dragging isn't
-  // disrupted.
+  // When notes change in storage (edited/deleted/added in another tab),
+  // reconcile the page without a refresh. Text and color of a note being
+  // actively edited in THIS tab are left alone (guarded by focus) so we never
+  // clobber what the user is typing.
   var reconcileTimer = null;
   chrome.storage.onChanged.addListener(function (changes, area) {
     if (area !== 'local') return;
@@ -102,11 +131,32 @@
         }
       });
 
-      // Add notes created in another tab.
+      // Add notes created elsewhere; update notes changed elsewhere.
       fresh.forEach(function (n) {
-        if (!document.querySelector('[data-note-id="' + cssEscape(n.id) + '"]')) {
+        var el = document.querySelector('[data-note-id="' + cssEscape(n.id) + '"]');
+        if (!el) {
           notes.push(n);
           renderNote(n);
+          return;
+        }
+        var obj = el.__quicknoteNote;
+        if (!obj) return;
+        var textarea = el.querySelector('.quicknote-content');
+        var beingEdited = textarea && document.activeElement === textarea;
+
+        // Sync text (unless the user is typing in this note right here).
+        if (textarea && !beingEdited && obj.content !== n.content) {
+          textarea.value = n.content;
+          obj.content = n.content;
+        }
+        // Sync color.
+        if (obj.color !== n.color) {
+          obj.color = n.color;
+          var card = el.querySelector('.quicknote-card');
+          var footer = el.querySelector('.quicknote-footer');
+          var pick = el.querySelector('.quicknote-colorpick');
+          applyNoteColor(card, textarea, footer, n.color);
+          if (pick) pick.value = toHex(n.color);
         }
       });
     });
@@ -215,7 +265,7 @@
       : 'Click to view, drag to move';
 
     var card = document.createElement('div');
-    card.className = 'quicknote-card quicknote-theme-' + safeColor(note.color);
+    card.className = 'quicknote-card';
     card.style.display = 'none';
     card.style.width = (note.width || 260) + 'px';
     card.style.height = (note.height || 190) + 'px';
@@ -228,14 +278,12 @@
     dragArea.className = 'quicknote-drag-area';
     dragArea.textContent = isGlobal ? '🌐 Global · drag' : 'Drag here';
 
-    var colors = document.createElement('div');
-    colors.className = 'quicknote-colors';
-    ['yellow', 'blue', 'green', 'pink'].forEach(function (c) {
-      var span = document.createElement('span');
-      span.className = 'quicknote-color quicknote-color-' + c;
-      span.setAttribute('data-color', c);
-      colors.appendChild(span);
-    });
+    // Single color picker — choose any color.
+    var colorPick = document.createElement('input');
+    colorPick.type = 'color';
+    colorPick.className = 'quicknote-color quicknote-colorpick';
+    colorPick.value = toHex(note.color);
+    colorPick.title = 'Pick note color';
 
     var scopeBtn = document.createElement('button');
     scopeBtn.className = 'quicknote-scope' + (isGlobal ? ' quicknote-scope-active' : '');
@@ -265,7 +313,7 @@
     deleteBtn.textContent = '×';
 
     header.appendChild(dragArea);
-    header.appendChild(colors);
+    header.appendChild(colorPick);
     header.appendChild(scopeBtn);
     header.appendChild(copyBtn);
     header.appendChild(monoBtn);
@@ -292,6 +340,13 @@
 
     container.appendChild(pin);
     container.appendChild(card);
+
+    // Apply the note's color now that card/textarea/footer exist.
+    applyNoteColor(card, textarea, footer, note.color);
+
+    // Keep a reference to the note object on the element so live cross-tab sync
+    // can update the same note that drag/edit handlers write to.
+    container.__quicknoteNote = note;
 
     // === Dragging / resizing state ===
     var isDraggingPin = false;
@@ -343,7 +398,7 @@
       } else if (isResizing) {
         var newWidth = e.clientX - container.offsetLeft + window.scrollX;
         var newHeight = e.clientY - container.offsetTop + window.scrollY;
-        if (newWidth > 248) { card.style.width = newWidth + 'px'; note.width = newWidth; }
+        if (newWidth > 224) { card.style.width = newWidth + 'px'; note.width = newWidth; }
         if (newHeight > 110) { card.style.height = newHeight + 'px'; note.height = newHeight; }
       }
     }
@@ -420,16 +475,13 @@
     };
     if (note.mono) monoBtn.classList.add('quicknote-mono-active');
 
-    var colorBtns = card.querySelectorAll('.quicknote-color');
-    for (var i = 0; i < colorBtns.length; i++) {
-      colorBtns[i].onclick = function (e) {
-        e.stopPropagation();
-        var color = this.getAttribute('data-color');
-        card.className = 'quicknote-card quicknote-theme-' + color;
-        note.color = color;
-        updateNote(note);
-      };
-    }
+    colorPick.onclick = function (e) { e.stopPropagation(); };
+    colorPick.oninput = function () {
+      note.color = colorPick.value;
+      applyNoteColor(card, textarea, footer, note.color);
+      note.updatedAt = Date.now();
+      updateNote(note);
+    };
 
     var saveTimeout;
     textarea.oninput = function () {
@@ -520,7 +572,7 @@
       y: y,
       width: 260,
       height: 190,
-      color: scope === 'global' ? 'blue' : 'yellow',
+      color: scope === 'global' ? '#dbeafe' : '#fef9c3',
       scope: scope || 'page',
       mono: false,
       createdAt: Date.now(),

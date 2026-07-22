@@ -36,7 +36,7 @@
 
 /* Card (expanded state) */
 .quicknote-card {
-  min-width: 248px;
+  min-width: 224px;
   min-height: 120px;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.12);
@@ -97,31 +97,25 @@
   cursor: move;
 }
 
-.quicknote-colors {
-  display: flex;
-  gap: 6px;
-  margin-right: 8px;
+/* Single color picker (native <input type="color">) styled as a round swatch */
+.quicknote-colorpick {
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
-}
-
-.quicknote-color {
-  width: 18px;
-  height: 18px;
+  margin-right: 6px;
+  padding: 0;
+  border: 2px solid rgba(255, 255, 255, 0.85);
   border-radius: 50%;
   cursor: pointer;
-  border: 2px solid rgba(255,255,255,0.8);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  transition: transform 0.2s;
+  background: transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s;
+  overflow: hidden;
 }
-
-.quicknote-color:hover {
-  transform: scale(1.25);
-}
-
-.quicknote-color-yellow { background: #fde047; }
-.quicknote-color-blue { background: #93c5fd; }
-.quicknote-color-green { background: #86efac; }
-.quicknote-color-pink { background: #f9a8d4; }
+.quicknote-colorpick:hover { transform: scale(1.2); }
+.quicknote-colorpick::-webkit-color-swatch-wrapper { padding: 0; }
+.quicknote-colorpick::-webkit-color-swatch { border: none; border-radius: 50%; }
+.quicknote-colorpick::-moz-color-swatch { border: none; border-radius: 50%; }
 
 .quicknote-minimize,
 .quicknote-delete,

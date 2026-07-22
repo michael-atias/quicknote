@@ -14,7 +14,8 @@ No accounts, no servers, no tracking — everything is stored locally in your br
 - **Snippet placeholders** — put `{{name}}` in a snippet and QuickNote prompts you to fill it in when you copy. Great for payloads and templates.
 - **One-click copy & code mode** — copy a note's text instantly, and toggle monospace for payloads and code.
 - **Notes manager** — search every note, jump to (“Reveal”) a note on the current page, copy, or delete it from the popup. No more lost notes.
-- **Color themes** — yellow, blue, green, pink.
+- **Any color** — a color picker on each note lets you choose any color; text auto-switches to stay readable.
+- **Live sync across tabs** — edits, colors, new notes, and deletes update in other open tabs instantly, no refresh.
 - **Dark mode** — the popup follows your system's light/dark setting automatically.
 - **JSON backup** — export and import all your notes and snippets.
 - **Auto-save** — notes save as you type.
